@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "neuroscope"
+version = "0.1.0"
+description = "Functional MRI for Large Language Models -- real-time visualization and analysis of LLM internal activations, functional connectivity, and feature extraction."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Mark Thornton", email = "mathornton01@users.noreply.github.com"},
+]
+keywords = ["llm", "interpretability", "mechanistic-interpretability", "sparse-autoencoder", "visualization", "neuroscience"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "torch>=2.0",
+    "numpy>=1.24",
+    "transformers>=4.35",
+    "transformer-lens>=1.0",
+    "einops>=0.7",
+]
+
+[project.optional-dependencies]
+viz = [
+    "fastapi>=0.100",
+    "uvicorn>=0.23",
+    "websockets>=11.0",
+    "plotly>=5.15",
+]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.1",
+    "mypy>=1.5",
+]
+all = ["neuroscope[viz,dev]"]
+
+[project.urls]
+Homepage = "https://github.com/mathornton01/neuroscope"
+Repository = "https://github.com/mathornton01/neuroscope"
+Issues = "https://github.com/mathornton01/neuroscope/issues"
+
+[tool.setuptools.packages.find]
+include = ["neuroscope*"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
