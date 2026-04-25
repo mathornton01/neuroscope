@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroScope -- Real-Time LLM Brain Scanner</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
+    overflow-x: hidden;
+  }
+
+  .header {
+    text-align: center;
+    padding: 20px;
+    border-bottom: 1px solid #1a1a2e;
+  }
+  .header h1 {
+    font-size: 24px;
+    color: #00ffaa;
+    letter-spacing: 3px;
+  }
+  .header .subtitle {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  .main-container {
+    display: flex;
+    height: calc(100vh - 80px);
+  }
+
+  /* Left panel -- controls and output */
+  .left-panel {
+    width: 350px;
+    border-right: 1px solid #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+  }
+
+  .prompt-section {
+    margin-bottom: 15px;
+  }
+  .prompt-section label {
+    display: block;
+    font-size: 11px;
+    color: #00ffaa;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .prompt-section textarea {
+    width: 100%;
+    height: 80px;
+    background: #111;
+    border: 1px solid #2a2a3e;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    padding: 8px;
+    resize: none;
+    border-radius: 4px;
+  }
+  .prompt-section textarea:focus {
+    outline: none;
+    border-color: #00ffaa;
+  }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+  .controls button {
+    flex: 1;
+    padding: 8px;
+    background: #00ffaa;
+    color: #0a0a0f;
+    border: none;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+    letter-spacing: 1px;
+  }
+  .controls button:hover { background: #00cc88; }
+  .controls button:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+  }
+  .controls button.stop {
+    background: #ff4444;
+    color: white;
+    flex: 0.4;
+  }
+
+  .param-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  .param-row label {
+    font-size: 10px;
+    color: #888;
+    display: block;
+    margin-bottom: 3px;
+  }
+  .param-row input {
+    width: 80px;
+    background: #111;
+    border: 1px solid #2a2a3e;
+    color: #e0e0e0;
+    padding: 4px 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    border-radius: 3px;
+  }
+
+  .output-section {
+    flex: 1;
+    overflow-y: auto;
+  }
+  .output-section .label {
+    font-size: 11px;
+    color: #00ffaa;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .output-text {
+    background: #111;
+    border: 1px solid #2a2a3e;
+    padding: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 100px;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .output-text .prompt-part { color: #888; }
+  .output-text .generated-part { color: #00ffaa; }
+  .output-text .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: #00ffaa;
+    animation: blink 0.5s infinite alternate;
+    vertical-align: text-bottom;
+  }
+  @keyframes blink { from { opacity: 1; } to { opacity: 0.2; } }
+
+  .stats {
+    margin-top: 10px;
+    font-size: 11px;
+    color: #666;
+  }
+
+  /* Right panel -- the brain visualization */
+  .right-panel {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Canvas for the neural network */
+  #brain-canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Layer info tooltip */
+  .tooltip {
+    display: none;
+    position: absolute;
+    background: #1a1a2e;
+    border: 1px solid #00ffaa;
+    padding: 8px 12px;
+    font-size: 11px;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 100;
+    max-width: 250px;
+  }
+  .tooltip .tip-name { color: #00ffaa; font-weight: bold; }
+  .tooltip .tip-val { color: #e0e0e0; }
+
+  /* Status bar */
+  .status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 24px;
+    background: #111;
+    border-top: 1px solid #1a1a2e;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    font-size: 10px;
+    color: #666;
+    gap: 20px;
+  }
+  .status-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+  .status-dot.connected { background: #00ffaa; }
+  .status-dot.disconnected { background: #ff4444; }
+  .status-dot.generating { background: #ffaa00; animation: pulse 0.5s infinite alternate; }
+  @keyframes pulse { from { opacity: 1; } to { opacity: 0.3; } }
+
+  /* Legend */
+  .legend {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(10,10,15,0.9);
+    border: 1px solid #1a1a2e;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 10px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .legend-swatch {
+    width: 20px;
+    height: 10px;
+    border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>NEUROSCOPE</h1>
+  <div class="subtitle">Real-Time LLM Brain Scanner | Functional MRI for Transformers</div>
+</div>
+
+<div class="main-container">
+  <div class="left-panel">
+    <div class="prompt-section">
+      <label>Prompt</label>
+      <textarea id="prompt-input" placeholder="Enter a prompt to scan...">The meaning of life is</textarea>
+    </div>
+
+    <div class="param-row">
+      <div>
+        <label>Max Tokens</label>
+        <input type="number" id="max-tokens" value="50" min="1" max="200">
+      </div>
+      <div>
+        <label>Temperature</label>
+        <input type="number" id="temperature" value="0.8" min="0" max="2" step="0.1">
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="scan-btn" onclick="startScan()">SCAN</button>
+      <button id="stop-btn" class="stop" onclick="stopScan()" disabled>STOP</button>
+    </div>
+
+    <div class="output-section">
+      <div class="label">Output Stream</div>
+      <div id="output-text" class="output-text">
+        <span class="prompt-part">Waiting for scan...</span>
+      </div>
+      <div id="stats" class="stats"></div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <canvas id="brain-canvas"></canvas>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: linear-gradient(90deg, #0a0a2e, #00ffaa);"></div>
+        <span>Activation (low -> high)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: linear-gradient(90deg, #1a1a3e, #ff6644);"></div>
+        <span>Attention heads</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: linear-gradient(90deg, #1a1a3e, #4488ff);"></div>
+        <span>MLP layers</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: linear-gradient(90deg, #1a1a3e, #aa44ff);"></div>
+        <span>Layer norms</span>
+      </div>
+    </div>
+    <div id="tooltip" class="tooltip"></div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <span><span id="status-dot" class="status-dot disconnected"></span><span id="status-text">Connecting...</span></span>
+  <span id="model-info">--</span>
+  <span id="token-counter">Tokens: 0</span>
+  <span id="speed-counter">Speed: -- tok/s</span>
+</div>
+
+<script>
+// =========================================================================
+// State
+// =========================================================================
+let ws = null;
+let isGenerating = false;
+let modelInfo = null;
+let tokenCount = 0;
+let startTime = 0;
+
+// Activation history for smooth rendering
+let currentActivations = {};
+let targetActivations = {};
+let animFrame = null;
+
+// Canvas
+const canvas = document.getElementById('brain-canvas');
+const ctx = canvas.getContext('2d');
+
+// Layout state
+let layout = null; // computed once we know model architecture
+
+// =========================================================================
+// WebSocket
+// =========================================================================
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws`);
+
+  ws.onopen = () => {
+    document.getElementById('status-dot').className = 'status-dot connected';
+    document.getElementById('status-text').textContent = 'Connected';
+  };
+
+  ws.onclose = () => {
+    document.getElementById('status-dot').className = 'status-dot disconnected';
+    document.getElementById('status-text').textContent = 'Disconnected';
+    setTimeout(connect, 2000);
+  };
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    handleMessage(data);
+  };
+}
+
+function handleMessage(data) {
+  switch (data.type) {
+    case 'prompt_processed':
+      modelInfo = data.model_info;
+      document.getElementById('model-info').textContent =
+        `${modelInfo.name} | ${modelInfo.n_layers}L x ${modelInfo.n_heads}H | d=${modelInfo.d_model}`;
+      computeLayout();
+      updateActivations(data.activations, true);
+      tokenCount = data.n_tokens;
+      startTime = performance.now();
+
+      document.getElementById('output-text').innerHTML =
+        `<span class="prompt-part">${escapeHtml(data.prompt)}</span><span class="generated-part"></span><span class="cursor"></span>`;
+      break;
+
+    case 'token_generated':
+      tokenCount++;
+      const elapsed = (performance.now() - startTime) / 1000;
+      document.getElementById('token-counter').textContent = `Tokens: ${tokenCount}`;
+      document.getElementById('speed-counter').textContent =
+        `Speed: ${(data.step / elapsed).toFixed(1)} tok/s`;
+
+      // Append token to output
+      const genSpan = document.querySelector('.generated-part');
+      if (genSpan) genSpan.textContent += data.token;
+
+      updateActivations(data.activations, false);
+      break;
+
+    case 'generation_complete':
+      isGenerating = false;
+      document.getElementById('scan-btn').disabled = false;
+      document.getElementById('stop-btn').disabled = true;
+      document.getElementById('status-dot').className = 'status-dot connected';
+      // Remove cursor
+      const cursor = document.querySelector('.cursor');
+      if (cursor) cursor.remove();
+
+      const finalElapsed = (performance.now() - startTime) / 1000;
+      document.getElementById('stats').textContent =
+        `Complete: ${data.total_tokens} tokens in ${finalElapsed.toFixed(1)}s`;
+      break;
+
+    case 'error':
+      console.error('Server error:', data.message);
+      isGenerating = false;
+      document.getElementById('scan-btn').disabled = false;
+      break;
+  }
+}
+
+function updateActivations(activations, isPrompt) {
+  // Set target activations for smooth interpolation
+  targetActivations = {};
+  for (const [name, info] of Object.entries(activations)) {
+    targetActivations[name] = info;
+  }
+}
+
+// =========================================================================
+// Controls
+// =========================================================================
+function startScan() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+  const prompt = document.getElementById('prompt-input').value.trim();
+  if (!prompt) return;
+
+  isGenerating = true;
+  document.getElementById('scan-btn').disabled = true;
+  document.getElementById('stop-btn').disabled = false;
+  document.getElementById('status-dot').className = 'status-dot generating';
+  document.getElementById('stats').textContent = '';
+
+  ws.send(JSON.stringify({
+    type: 'generate',
+    prompt: prompt,
+    max_tokens: parseInt(document.getElementById('max-tokens').value) || 50,
+    temperature: parseFloat(document.getElementById('temperature').value) || 0.8,
+  }));
+}
+
+function stopScan() {
+  // Close and reconnect to interrupt generation
+  if (ws) ws.close();
+  isGenerating = false;
+  document.getElementById('scan-btn').disabled = false;
+  document.getElementById('stop-btn').disabled = true;
+}
+
+// Enter key to scan
+document.getElementById('prompt-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    startScan();
+  }
+});
+
+// =========================================================================
+// Visualization layout
+// =========================================================================
+function computeLayout() {
+  if (!modelInfo) return;
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const nLayers = modelInfo.n_layers;
+  const nHeads = modelInfo.n_heads;
+
+  const marginTop = 60;
+  const marginBottom = 60;
+  const layerHeight = (H - marginTop - marginBottom) / nLayers;
+
+  // Each layer has: LN -> Attn Heads -> LN -> MLP
+  // We'll draw them as blocks within each layer row
+  const layerWidth = W * 0.85;
+  const layerLeft = (W - layerWidth) / 2;
+
+  layout = {
+    nLayers, nHeads, W, H,
+    marginTop, layerHeight, layerWidth, layerLeft,
+    layers: [],
+  };
+
+  for (let i = 0; i < nLayers; i++) {
+    const y = marginTop + i * layerHeight;
+    const layerData = {
+      idx: i,
+      y: y,
+      // Attention block
+      attn: {
+        x: layerLeft,
+        y: y + 4,
+        w: layerWidth * 0.55,
+        h: layerHeight - 8,
+        heads: [],
+      },
+      // MLP block
+      mlp: {
+        x: layerLeft + layerWidth * 0.58,
+        y: y + 4,
+        w: layerWidth * 0.25,
+        h: layerHeight - 8,
+      },
+      // Layer norm indicators
+      ln: {
+        x: layerLeft + layerWidth * 0.86,
+        y: y + 4,
+        w: layerWidth * 0.12,
+        h: layerHeight - 8,
+      },
+    };
+
+    // Individual attention heads within the attn block
+    const headW = (layerData.attn.w - 4) / nHeads;
+    for (let h = 0; h < nHeads; h++) {
+      layerData.attn.heads.push({
+        x: layerData.attn.x + 2 + h * headW,
+        y: layerData.attn.y + 2,
+        w: headW - 1,
+        h: layerData.attn.h - 4,
+      });
+    }
+
+    layout.layers.push(layerData);
+  }
+}
+
+// =========================================================================
+// Rendering
+// =========================================================================
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  if (modelInfo) computeLayout();
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function intensityToColor(val, type) {
+  // val: 0-1 normalized intensity
+  val = Math.min(1, Math.max(0, val));
+
+  if (type === 'attn') {
+    // Orange-red for attention
+    const r = Math.floor(lerp(26, 255, val));
+    const g = Math.floor(lerp(26, 102, val));
+    const b = Math.floor(lerp(62, 68, val));
+    return `rgb(${r},${g},${b})`;
+  } else if (type === 'mlp') {
+    // Blue for MLP
+    const r = Math.floor(lerp(26, 68, val));
+    const g = Math.floor(lerp(26, 136, val));
+    const b = Math.floor(lerp(62, 255, val));
+    return `rgb(${r},${g},${b})`;
+  } else {
+    // Purple for layer norm
+    const r = Math.floor(lerp(26, 170, val));
+    const g = Math.floor(lerp(26, 68, val));
+    const b = Math.floor(lerp(62, 255, val));
+    return `rgb(${r},${g},${b})`;
+  }
+}
+
+// Smoothed activation values for rendering
+let smoothActivations = {};
+
+function getIntensity(name) {
+  const info = targetActivations[name];
+  if (!info) return 0;
+
+  // Normalize magnitude to 0-1 range
+  // GPT-2 typical magnitudes: 0-50 for mean, higher for max
+  const mag = info.mean_magnitude || 0;
+  return Math.min(1, mag / 30); // adjust denominator based on observed ranges
+}
+
+function render() {
+  const W = canvas.width / window.devicePixelRatio;
+  const H = canvas.height / window.devicePixelRatio;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (!layout) {
+    // Draw waiting state
+    ctx.fillStyle = '#333';
+    ctx.font = '14px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('Waiting for model...', W / 2, H / 2);
+    ctx.fillText('Press SCAN to begin', W / 2, H / 2 + 24);
+    animFrame = requestAnimationFrame(render);
+    return;
+  }
+
+  // Smooth activations toward target
+  for (const [name, info] of Object.entries(targetActivations)) {
+    if (!smoothActivations[name]) smoothActivations[name] = 0;
+    const target = getIntensity(name);
+    smoothActivations[name] = lerp(smoothActivations[name], target, 0.3);
+  }
+  // Decay activations not in current target
+  for (const name of Object.keys(smoothActivations)) {
+    if (!targetActivations[name]) {
+      smoothActivations[name] *= 0.95;
+    }
+  }
+
+  // Build a map of layer_idx -> component -> intensity
+  const layerIntensities = {};
+  for (const [name, info] of Object.entries(targetActivations)) {
+    const idx = info.layer_idx;
+    if (idx < 0) continue;
+    if (!layerIntensities[idx]) layerIntensities[idx] = { attn: 0, mlp: 0, ln: 0 };
+
+    const mag = Math.min(1, (info.mean_magnitude || 0) / 30);
+    if (name.includes('attn')) {
+      layerIntensities[idx].attn = Math.max(layerIntensities[idx].attn, mag);
+    } else if (name.includes('mlp')) {
+      layerIntensities[idx].mlp = Math.max(layerIntensities[idx].mlp, mag);
+    } else if (name.includes('ln')) {
+      layerIntensities[idx].ln = Math.max(layerIntensities[idx].ln, mag);
+    }
+  }
+
+  // Draw title for the brain area
+  ctx.fillStyle = '#444';
+  ctx.font = '11px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillText('TRANSFORMER LAYERS', W / 2, 20);
+
+  // Column headers
+  const ly = layout.layers[0];
+  ctx.fillStyle = '#555';
+  ctx.font = '9px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillText('ATTENTION HEADS', ly.attn.x + ly.attn.w / 2, layout.marginTop - 8);
+  ctx.fillText('MLP', ly.mlp.x + ly.mlp.w / 2, layout.marginTop - 8);
+  ctx.fillText('LN', ly.ln.x + ly.ln.w / 2, layout.marginTop - 8);
+
+  // Draw each layer
+  for (const layer of layout.layers) {
+    const intensity = layerIntensities[layer.idx] || { attn: 0, mlp: 0, ln: 0 };
+
+    // Layer label
+    ctx.fillStyle = '#444';
+    ctx.font = '9px Courier New';
+    ctx.textAlign = 'right';
+    ctx.fillText(`L${layer.idx}`, layer.attn.x - 6, layer.y + layout.layerHeight / 2 + 3);
+
+    // Attention heads
+    for (let h = 0; h < layer.attn.heads.length; h++) {
+      const head = layer.attn.heads[h];
+      // Each head can have slightly different intensity for visual interest
+      const headIntensity = intensity.attn * (0.7 + 0.3 * Math.sin(h * 1.7 + layer.idx * 0.5));
+      ctx.fillStyle = intensityToColor(headIntensity, 'attn');
+      ctx.fillRect(head.x, head.y, head.w, head.h);
+
+      // Glow effect when active
+      if (headIntensity > 0.3) {
+        ctx.shadowColor = '#ff6644';
+        ctx.shadowBlur = headIntensity * 15;
+        ctx.fillRect(head.x, head.y, head.w, head.h);
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // Attention block border
+    ctx.strokeStyle = intensity.attn > 0.1 ? `rgba(255,102,68,${intensity.attn * 0.5})` : '#1a1a2e';
+    ctx.strokeRect(layer.attn.x, layer.attn.y, layer.attn.w, layer.attn.h);
+
+    // MLP block
+    ctx.fillStyle = intensityToColor(intensity.mlp, 'mlp');
+    ctx.fillRect(layer.mlp.x, layer.mlp.y, layer.mlp.w, layer.mlp.h);
+    if (intensity.mlp > 0.3) {
+      ctx.shadowColor = '#4488ff';
+      ctx.shadowBlur = intensity.mlp * 15;
+      ctx.fillRect(layer.mlp.x, layer.mlp.y, layer.mlp.w, layer.mlp.h);
+      ctx.shadowBlur = 0;
+    }
+    ctx.strokeStyle = intensity.mlp > 0.1 ? `rgba(68,136,255,${intensity.mlp * 0.5})` : '#1a1a2e';
+    ctx.strokeRect(layer.mlp.x, layer.mlp.y, layer.mlp.w, layer.mlp.h);
+
+    // Layer norm block
+    ctx.fillStyle = intensityToColor(intensity.ln, 'ln');
+    ctx.fillRect(layer.ln.x, layer.ln.y, layer.ln.w, layer.ln.h);
+    if (intensity.ln > 0.3) {
+      ctx.shadowColor = '#aa44ff';
+      ctx.shadowBlur = intensity.ln * 15;
+      ctx.fillRect(layer.ln.x, layer.ln.y, layer.ln.w, layer.ln.h);
+      ctx.shadowBlur = 0;
+    }
+    ctx.strokeStyle = intensity.ln > 0.1 ? `rgba(170,68,255,${intensity.ln * 0.5})` : '#1a1a2e';
+    ctx.strokeRect(layer.ln.x, layer.ln.y, layer.ln.w, layer.ln.h);
+
+    // Connection lines between layers (residual stream)
+    if (layer.idx < layout.nLayers - 1) {
+      const nextLayer = layout.layers[layer.idx + 1];
+      const combinedIntensity = Math.max(intensity.attn, intensity.mlp) * 0.5;
+      ctx.strokeStyle = `rgba(0,255,170,${0.05 + combinedIntensity * 0.3})`;
+      ctx.lineWidth = 1 + combinedIntensity * 2;
+      ctx.beginPath();
+      ctx.moveTo(layer.attn.x + layer.attn.w / 2, layer.y + layout.layerHeight);
+      ctx.lineTo(nextLayer.attn.x + nextLayer.attn.w / 2, nextLayer.y);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+    }
+  }
+
+  // Draw data flow arrow on the side
+  const arrowX = layout.layerLeft - 25;
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(arrowX, layout.marginTop);
+  ctx.lineTo(arrowX, layout.marginTop + layout.nLayers * layout.layerHeight);
+  ctx.stroke();
+  // Arrow head
+  ctx.beginPath();
+  ctx.moveTo(arrowX - 4, layout.marginTop + layout.nLayers * layout.layerHeight - 8);
+  ctx.lineTo(arrowX, layout.marginTop + layout.nLayers * layout.layerHeight);
+  ctx.lineTo(arrowX + 4, layout.marginTop + layout.nLayers * layout.layerHeight - 8);
+  ctx.stroke();
+  ctx.fillStyle = '#444';
+  ctx.font = '8px Courier New';
+  ctx.textAlign = 'center';
+  ctx.save();
+  ctx.translate(arrowX - 10, layout.marginTop + layout.nLayers * layout.layerHeight / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('DATA FLOW', 0, 0);
+  ctx.restore();
+
+  // Bottom label
+  ctx.fillStyle = '#333';
+  ctx.font = '10px Courier New';
+  ctx.textAlign = 'center';
+  const bottomY = layout.marginTop + layout.nLayers * layout.layerHeight + 20;
+  ctx.fillText('OUTPUT LOGITS', W / 2, bottomY);
+
+  // Top label
+  ctx.fillText('INPUT EMBEDDINGS', W / 2, layout.marginTop - 25);
+
+  animFrame = requestAnimationFrame(render);
+}
+
+// =========================================================================
+// Tooltip on hover
+// =========================================================================
+canvas.addEventListener('mousemove', (e) => {
+  if (!layout) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const tooltip = document.getElementById('tooltip');
+  let found = false;
+
+  for (const layer of layout.layers) {
+    // Check attention
+    if (x >= layer.attn.x && x <= layer.attn.x + layer.attn.w &&
+        y >= layer.attn.y && y <= layer.attn.y + layer.attn.h) {
+      const info = getLayerInfo(layer.idx, 'attn');
+      showTooltip(e.clientX, e.clientY, `Layer ${layer.idx} Attention`, info);
+      found = true;
+      break;
+    }
+    // Check MLP
+    if (x >= layer.mlp.x && x <= layer.mlp.x + layer.mlp.w &&
+        y >= layer.mlp.y && y <= layer.mlp.y + layer.mlp.h) {
+      const info = getLayerInfo(layer.idx, 'mlp');
+      showTooltip(e.clientX, e.clientY, `Layer ${layer.idx} MLP`, info);
+      found = true;
+      break;
+    }
+    // Check LN
+    if (x >= layer.ln.x && x <= layer.ln.x + layer.ln.w &&
+        y >= layer.ln.y && y <= layer.ln.y + layer.ln.h) {
+      const info = getLayerInfo(layer.idx, 'ln');
+      showTooltip(e.clientX, e.clientY, `Layer ${layer.idx} LayerNorm`, info);
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) tooltip.style.display = 'none';
+});
+
+function getLayerInfo(layerIdx, component) {
+  let info = [];
+  for (const [name, data] of Object.entries(targetActivations)) {
+    if (data.layer_idx === layerIdx && name.includes(component)) {
+      info.push(data);
+    }
+  }
+  return info;
+}
+
+function showTooltip(x, y, title, infos) {
+  const tooltip = document.getElementById('tooltip');
+  let html = `<div class="tip-name">${title}</div>`;
+  if (infos.length === 0) {
+    html += '<div class="tip-val">No data</div>';
+  } else {
+    for (const info of infos) {
+      html += `<div class="tip-val">${info.name}</div>`;
+      html += `<div class="tip-val">Magnitude: ${info.mean_magnitude} | Max: ${info.max_activation}</div>`;
+      html += `<div class="tip-val">Sparsity: ${(info.sparsity * 100).toFixed(1)}% | Shape: ${info.shape}</div>`;
+    }
+  }
+  tooltip.innerHTML = html;
+  tooltip.style.display = 'block';
+  tooltip.style.left = (x + 15) + 'px';
+  tooltip.style.top = (y - 10) + 'px';
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// =========================================================================
+// Init
+// =========================================================================
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+connect();
+render();
+</script>
+</body>
+</html>
