@@ -124,6 +124,44 @@
     border-radius: 3px;
   }
 
+  .speed-slider-section {
+    margin-bottom: 15px;
+  }
+  .speed-slider-section label {
+    display: block;
+    font-size: 10px;
+    color: #888;
+    margin-bottom: 3px;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .slider-label {
+    font-size: 9px;
+    color: #555;
+    min-width: 28px;
+  }
+  .slider-row input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: #2a2a3e;
+    border-radius: 2px;
+    outline: none;
+  }
+  .slider-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00ffaa;
+    cursor: pointer;
+  }
+
   .output-section {
     flex: 1;
     overflow-y: auto;
@@ -270,6 +308,15 @@
       </div>
     </div>
 
+    <div class="speed-slider-section">
+      <label>Animation Speed</label>
+      <div class="slider-row">
+        <span class="slider-label">Slow</span>
+        <input type="range" id="speed-slider" min="1" max="10" value="4" step="1">
+        <span class="slider-label">Fast</span>
+      </div>
+    </div>
+
     <div class="controls">
       <button id="scan-btn" onclick="startScan()">SCAN</button>
       <button id="stop-btn" class="stop" onclick="stopScan()" disabled>STOP</button>
@@ -329,6 +376,11 @@ let startTime = 0;
 let currentActivations = {};
 let targetActivations = {};
 let animFrame = null;
+
+// Queued activation snapshots for wave animation
+let activationQueue = [];
+let activeWave = null;  // { activations, startTime, layerTimes[] }
+let lastRenderTime = 0;
 
 // Canvas
 const canvas = document.getElementById('brain-canvas');
@@ -413,11 +465,8 @@ function handleMessage(data) {
 }
 
 function updateActivations(activations, isPrompt) {
-  // Set target activations for smooth interpolation
-  targetActivations = {};
-  for (const [name, info] of Object.entries(activations)) {
-    targetActivations[name] = info;
-  }
+  // Queue this activation snapshot as a wave to propagate through layers
+  activationQueue.push({ activations, isPrompt, queuedAt: performance.now() });
 }
 
 // =========================================================================
@@ -556,24 +605,46 @@ function resizeCanvas() {
 
 function lerp(a, b, t) { return a + (b - a) * t; }
 
+// Smooth ease-in-out for elegant wave
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+// Per-layer smoothed intensities
+let layerIntensities = []; // array of { attn, mlp, ln } per layer
+
+function getSpeedFactor() {
+  const slider = document.getElementById('speed-slider');
+  return parseInt(slider.value); // 1 (slow) to 10 (fast)
+}
+
+function getWaveDuration() {
+  // How long (ms) it takes for the wave to travel through all layers
+  const speed = getSpeedFactor();
+  // speed 1 = 3000ms, speed 10 = 300ms
+  return 3300 - speed * 300;
+}
+
+function getLayerStagger() {
+  // Delay between each layer lighting up
+  if (!layout) return 50;
+  return getWaveDuration() / (layout.nLayers + 4);
+}
+
 function intensityToColor(val, type) {
-  // val: 0-1 normalized intensity
   val = Math.min(1, Math.max(0, val));
 
   if (type === 'attn') {
-    // Orange-red for attention -- lighter baseline
     const r = Math.floor(lerp(50, 255, val));
     const g = Math.floor(lerp(38, 120, val));
     const b = Math.floor(lerp(45, 60, val));
     return `rgb(${r},${g},${b})`;
   } else if (type === 'mlp') {
-    // Blue for MLP -- lighter baseline
     const r = Math.floor(lerp(35, 80, val));
     const g = Math.floor(lerp(42, 160, val));
     const b = Math.floor(lerp(65, 255, val));
     return `rgb(${r},${g},${b})`;
   } else {
-    // Purple for layer norm -- lighter baseline
     const r = Math.floor(lerp(50, 190, val));
     const g = Math.floor(lerp(35, 80, val));
     const b = Math.floor(lerp(65, 255, val));
@@ -588,20 +659,103 @@ function borderColor(val, type) {
   return `rgba(180,90,255,${0.25 + val * 0.6})`;
 }
 
-// Smoothed activation values for rendering
-let smoothActivations = {};
+function processWaves(now) {
+  if (!layout) return;
 
-function getIntensity(name) {
-  const info = targetActivations[name];
-  if (!info) return 0;
+  // Initialize layer intensities if needed
+  if (layerIntensities.length !== layout.nLayers) {
+    layerIntensities = [];
+    for (let i = 0; i < layout.nLayers; i++) {
+      layerIntensities.push({ attn: 0, mlp: 0, ln: 0 });
+    }
+  }
 
-  // Normalize magnitude to 0-1 range
-  // GPT-2 typical magnitudes: 0-50 for mean, higher for max
-  const mag = info.mean_magnitude || 0;
-  return Math.min(1, mag / 30); // adjust denominator based on observed ranges
+  const stagger = getLayerStagger();
+  const speed = getSpeedFactor();
+  // Decay rate: how fast idle layers fade (slower at low speed)
+  const decayRate = 0.02 + speed * 0.008;
+  // Rise rate for smoothing toward target
+  const riseRate = 0.05 + speed * 0.03;
+
+  // Start next wave from queue if no active wave
+  if (!activeWave && activationQueue.length > 0) {
+    const snapshot = activationQueue.shift();
+    const acts = snapshot.activations;
+
+    // Parse activations into per-layer targets
+    const layerTargets = [];
+    for (let i = 0; i < layout.nLayers; i++) {
+      layerTargets.push({ attn: 0, mlp: 0, ln: 0 });
+    }
+    for (const [name, info] of Object.entries(acts)) {
+      const idx = info.layer_idx;
+      if (idx < 0 || idx >= layout.nLayers) continue;
+      const mag = Math.min(1, (info.mean_magnitude || 0) / 30);
+      if (name.includes('attn')) layerTargets[idx].attn = Math.max(layerTargets[idx].attn, mag);
+      else if (name.includes('mlp')) layerTargets[idx].mlp = Math.max(layerTargets[idx].mlp, mag);
+      else if (name.includes('ln')) layerTargets[idx].ln = Math.max(layerTargets[idx].ln, mag);
+    }
+
+    // Also store raw activations for tooltip access
+    targetActivations = {};
+    for (const [name, info] of Object.entries(acts)) {
+      targetActivations[name] = info;
+    }
+
+    activeWave = {
+      startTime: now,
+      layerTargets,
+      stagger,
+    };
+  }
+
+  // Update each layer's smoothed intensity
+  for (let i = 0; i < layout.nLayers; i++) {
+    const cur = layerIntensities[i];
+
+    if (activeWave) {
+      const waveDelay = i * activeWave.stagger;
+      const elapsed = now - activeWave.startTime - waveDelay;
+
+      if (elapsed > 0) {
+        // This layer has been reached by the wave
+        const waveDur = activeWave.stagger * 3; // each layer's activation envelope
+        const t = Math.min(1, elapsed / waveDur);
+        const envelope = easeInOut(t);
+
+        const target = activeWave.layerTargets[i];
+        cur.attn = lerp(cur.attn, target.attn * envelope, riseRate);
+        cur.mlp = lerp(cur.mlp, target.mlp * envelope, riseRate);
+        cur.ln = lerp(cur.ln, target.ln * envelope, riseRate);
+      }
+    }
+
+    // Gentle decay when no wave is hitting this layer
+    if (!activeWave) {
+      cur.attn = Math.max(0, cur.attn - decayRate);
+      cur.mlp = Math.max(0, cur.mlp - decayRate);
+      cur.ln = Math.max(0, cur.ln - decayRate);
+    }
+  }
+
+  // Check if active wave is done (all layers fully reached)
+  if (activeWave) {
+    const totalWaveTime = layout.nLayers * activeWave.stagger + activeWave.stagger * 4;
+    if (now - activeWave.startTime > totalWaveTime) {
+      // Wave complete -- set final targets
+      for (let i = 0; i < layout.nLayers; i++) {
+        const target = activeWave.layerTargets[i];
+        layerIntensities[i].attn = target.attn;
+        layerIntensities[i].mlp = target.mlp;
+        layerIntensities[i].ln = target.ln;
+      }
+      activeWave = null;
+    }
+  }
 }
 
 function render() {
+  const now = performance.now();
   const W = canvas.width / window.devicePixelRatio;
   const H = canvas.height / window.devicePixelRatio;
 
@@ -617,26 +771,7 @@ function render() {
     return;
   }
 
-  // Smooth activations toward target
-  for (const [name, info] of Object.entries(targetActivations)) {
-    if (!smoothActivations[name]) smoothActivations[name] = 0;
-    smoothActivations[name] = lerp(smoothActivations[name], getIntensity(name), 0.3);
-  }
-  for (const name of Object.keys(smoothActivations)) {
-    if (!targetActivations[name]) smoothActivations[name] *= 0.95;
-  }
-
-  // Build layer_idx -> component -> intensity map
-  const li = {};
-  for (const [name, info] of Object.entries(targetActivations)) {
-    const idx = info.layer_idx;
-    if (idx < 0) continue;
-    if (!li[idx]) li[idx] = { attn: 0, mlp: 0, ln: 0 };
-    const mag = Math.min(1, (info.mean_magnitude || 0) / 30);
-    if (name.includes('attn')) li[idx].attn = Math.max(li[idx].attn, mag);
-    else if (name.includes('mlp')) li[idx].mlp = Math.max(li[idx].mlp, mag);
-    else if (name.includes('ln')) li[idx].ln = Math.max(li[idx].ln, mag);
-  }
+  processWaves(now);
 
   const lh = layout.layerHeight;
   const ly0 = layout.layers[0];
@@ -659,7 +794,7 @@ function render() {
 
   // Draw each layer
   for (const layer of layout.layers) {
-    const intensity = li[layer.idx] || { attn: 0, mlp: 0, ln: 0 };
+    const intensity = layerIntensities[layer.idx] || { attn: 0, mlp: 0, ln: 0 };
 
     // Layer label
     ctx.fillStyle = '#555';
@@ -670,10 +805,12 @@ function render() {
     // -- LN1 block --
     drawBlock(layer.ln1, intensity.ln, 'ln');
 
-    // -- Attention heads --
+    // -- Attention heads with subtle per-head variation --
     for (let h = 0; h < layer.attn.heads.length; h++) {
       const head = layer.attn.heads[h];
-      const hi = intensity.attn * (0.7 + 0.3 * Math.sin(h * 1.7 + layer.idx * 0.5));
+      // Stagger each head slightly within the attention block
+      const headPhase = (h / layer.attn.heads.length) * 0.3;
+      const hi = intensity.attn * (0.7 + 0.3 * Math.sin(h * 1.7 + layer.idx * 0.5 + now * 0.001));
       ctx.fillStyle = intensityToColor(hi, 'attn');
       ctx.fillRect(head.x, head.y, head.w, head.h);
       ctx.strokeStyle = borderColor(hi, 'attn');
@@ -685,7 +822,7 @@ function render() {
     ctx.strokeStyle = borderColor(intensity.attn, 'attn');
     ctx.strokeRect(layer.attn.x, layer.attn.y, layer.attn.w, layer.attn.h);
 
-    // -- Residual add 1 (circle with +) --
+    // -- Residual add 1 --
     drawAddCircle(layer.add1, Math.max(intensity.attn, intensity.ln));
 
     // -- LN2 block --
@@ -697,14 +834,13 @@ function render() {
     // -- Residual add 2 --
     drawAddCircle(layer.add2, Math.max(intensity.mlp, intensity.ln));
 
-    // Connection to next layer (thin line from add2 down to next ln1)
+    // Connection lines between layers
     if (layer.idx < layout.nLayers - 1) {
       const next = layout.layers[layer.idx + 1];
-      const ci = Math.max(intensity.attn, intensity.mlp) * 0.4;
-      ctx.strokeStyle = `rgba(0,255,170,${0.1 + ci * 0.4})`;
-      ctx.lineWidth = 1;
+      const ci = Math.max(intensity.attn, intensity.mlp);
+      ctx.strokeStyle = `rgba(0,255,170,${0.08 + ci * 0.25})`;
+      ctx.lineWidth = ci > 0.1 ? 1.5 : 1;
       ctx.beginPath();
-      // Line from bottom-center of this layer to top-center of next
       const midX = W / 2;
       ctx.moveTo(midX, layer.y + lh + 1);
       ctx.lineTo(midX, next.y - 1);
@@ -746,11 +882,14 @@ function drawBlock(rect, intensity, type) {
   ctx.lineWidth = 0.5;
   ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
   ctx.lineWidth = 1;
-  if (intensity > 0.5) {
+  // Soft glow for high-intensity blocks
+  if (intensity > 0.3) {
     const glowColor = type === 'mlp' ? '#4488ff' : type === 'attn' ? '#ff8850' : '#aa44ff';
     ctx.shadowColor = glowColor;
-    ctx.shadowBlur = intensity * 6;
+    ctx.shadowBlur = intensity * 8;
+    ctx.globalAlpha = intensity * 0.6;
     ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.globalAlpha = 1;
     ctx.shadowBlur = 0;
   }
 }
