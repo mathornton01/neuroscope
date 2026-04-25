@@ -465,67 +465,79 @@ document.getElementById('prompt-input').addEventListener('keydown', (e) => {
 function computeLayout() {
   if (!modelInfo) return;
 
-  const W = canvas.width;
-  const H = canvas.height;
+  const W = canvas.width / window.devicePixelRatio;
+  const H = canvas.height / window.devicePixelRatio;
   const nLayers = modelInfo.n_layers;
   const nHeads = modelInfo.n_heads;
 
-  const marginTop = 60;
-  const marginBottom = 60;
-  const layerHeight = (H - marginTop - marginBottom) / nLayers;
+  // Compact layout: each layer is a narrow horizontal strip
+  // Actual transformer block flow: Input -> [LN1 -> MultiHead Attn -> +] -> [LN2 -> MLP -> +] -> Output
+  const marginTop = 45;
+  const marginBottom = 35;
+  const availH = H - marginTop - marginBottom;
 
-  // Each layer has: LN -> Attn Heads -> LN -> MLP
-  // We'll draw them as blocks within each layer row
-  const layerWidth = W * 0.85;
-  const layerLeft = (W - layerWidth) / 2;
+  // Each layer row: fixed small height, scrollable if needed
+  const maxLayerH = 32;
+  const gap = 3;
+  const layerHeight = Math.min(maxLayerH, (availH - 20) / nLayers - gap);
+  const totalHeight = nLayers * (layerHeight + gap);
+
+  // Center the diagram horizontally, keep it narrow
+  const diagramWidth = Math.min(W * 0.7, 500);
+  const diagramLeft = (W - diagramWidth) / 2;
+
+  // Component widths within each layer row
+  // Flow: LN1 | ATTN (with heads) | + | LN2 | MLP | +
+  const compGap = 2;
+  const addW = 12; // residual add circles
+  const lnW = 24;
+  const remainW = diagramWidth - (2 * lnW) - (2 * addW) - (5 * compGap);
+  const attnW = remainW * 0.55;
+  const mlpW = remainW * 0.45;
 
   layout = {
     nLayers, nHeads, W, H,
-    marginTop, layerHeight, layerWidth, layerLeft,
+    marginTop, layerHeight, diagramWidth, diagramLeft,
+    gap, totalHeight, lnW, attnW, mlpW, addW, compGap,
+    scrollY: 0,
     layers: [],
   };
 
   for (let i = 0; i < nLayers; i++) {
-    const y = marginTop + i * layerHeight;
-    const layerData = {
-      idx: i,
-      y: y,
-      // Attention block
-      attn: {
-        x: layerLeft,
-        y: y + 4,
-        w: layerWidth * 0.55,
-        h: layerHeight - 8,
-        heads: [],
-      },
-      // MLP block
-      mlp: {
-        x: layerLeft + layerWidth * 0.58,
-        y: y + 4,
-        w: layerWidth * 0.25,
-        h: layerHeight - 8,
-      },
-      // Layer norm indicators
-      ln: {
-        x: layerLeft + layerWidth * 0.86,
-        y: y + 4,
-        w: layerWidth * 0.12,
-        h: layerHeight - 8,
-      },
-    };
+    const y = marginTop + i * (layerHeight + gap);
+    let cx = diagramLeft;
 
-    // Individual attention heads within the attn block
-    const headW = (layerData.attn.w - 4) / nHeads;
+    const ln1 = { x: cx, y: y, w: lnW, h: layerHeight };
+    cx += lnW + compGap;
+
+    const attn = { x: cx, y: y, w: attnW, h: layerHeight, heads: [] };
+    // Individual heads as small cells inside attn
+    const headW = (attnW - 2) / nHeads;
     for (let h = 0; h < nHeads; h++) {
-      layerData.attn.heads.push({
-        x: layerData.attn.x + 2 + h * headW,
-        y: layerData.attn.y + 2,
+      attn.heads.push({
+        x: cx + 1 + h * headW,
+        y: y + 1,
         w: headW - 1,
-        h: layerData.attn.h - 4,
+        h: layerHeight - 2,
       });
     }
+    cx += attnW + compGap;
 
-    layout.layers.push(layerData);
+    const add1 = { x: cx, y: y, w: addW, h: layerHeight };
+    cx += addW + compGap;
+
+    const ln2 = { x: cx, y: y, w: lnW, h: layerHeight };
+    cx += lnW + compGap;
+
+    const mlp = { x: cx, y: y, w: mlpW, h: layerHeight };
+    cx += mlpW + compGap;
+
+    const add2 = { x: cx, y: y, w: addW, h: layerHeight };
+
+    layout.layers.push({
+      idx: i, y,
+      ln1, attn, add1, ln2, mlp, add2,
+    });
   }
 }
 
@@ -596,12 +608,11 @@ function render() {
   ctx.clearRect(0, 0, W, H);
 
   if (!layout) {
-    // Draw waiting state
-    ctx.fillStyle = '#333';
-    ctx.font = '14px Courier New';
+    ctx.fillStyle = '#555';
+    ctx.font = '13px Courier New';
     ctx.textAlign = 'center';
     ctx.fillText('Waiting for model...', W / 2, H / 2);
-    ctx.fillText('Press SCAN to begin', W / 2, H / 2 + 24);
+    ctx.fillText('Press SCAN to begin', W / 2, H / 2 + 20);
     animFrame = requestAnimationFrame(render);
     return;
   }
@@ -609,161 +620,161 @@ function render() {
   // Smooth activations toward target
   for (const [name, info] of Object.entries(targetActivations)) {
     if (!smoothActivations[name]) smoothActivations[name] = 0;
-    const target = getIntensity(name);
-    smoothActivations[name] = lerp(smoothActivations[name], target, 0.3);
+    smoothActivations[name] = lerp(smoothActivations[name], getIntensity(name), 0.3);
   }
-  // Decay activations not in current target
   for (const name of Object.keys(smoothActivations)) {
-    if (!targetActivations[name]) {
-      smoothActivations[name] *= 0.95;
-    }
+    if (!targetActivations[name]) smoothActivations[name] *= 0.95;
   }
 
-  // Build a map of layer_idx -> component -> intensity
-  const layerIntensities = {};
+  // Build layer_idx -> component -> intensity map
+  const li = {};
   for (const [name, info] of Object.entries(targetActivations)) {
     const idx = info.layer_idx;
     if (idx < 0) continue;
-    if (!layerIntensities[idx]) layerIntensities[idx] = { attn: 0, mlp: 0, ln: 0 };
-
+    if (!li[idx]) li[idx] = { attn: 0, mlp: 0, ln: 0 };
     const mag = Math.min(1, (info.mean_magnitude || 0) / 30);
-    if (name.includes('attn')) {
-      layerIntensities[idx].attn = Math.max(layerIntensities[idx].attn, mag);
-    } else if (name.includes('mlp')) {
-      layerIntensities[idx].mlp = Math.max(layerIntensities[idx].mlp, mag);
-    } else if (name.includes('ln')) {
-      layerIntensities[idx].ln = Math.max(layerIntensities[idx].ln, mag);
-    }
+    if (name.includes('attn')) li[idx].attn = Math.max(li[idx].attn, mag);
+    else if (name.includes('mlp')) li[idx].mlp = Math.max(li[idx].mlp, mag);
+    else if (name.includes('ln')) li[idx].ln = Math.max(li[idx].ln, mag);
   }
 
-  // Draw title for the brain area
-  ctx.fillStyle = '#444';
-  ctx.font = '11px Courier New';
+  const lh = layout.layerHeight;
+  const ly0 = layout.layers[0];
+
+  // Title
+  ctx.fillStyle = '#555';
+  ctx.font = '10px Courier New';
   ctx.textAlign = 'center';
-  ctx.fillText('TRANSFORMER LAYERS', W / 2, 20);
+  ctx.fillText('INPUT EMBEDDINGS', W / 2, layout.marginTop - 18);
 
   // Column headers
-  const ly = layout.layers[0];
-  ctx.fillStyle = '#555';
-  ctx.font = '9px Courier New';
-  ctx.textAlign = 'center';
-  ctx.fillText('ATTENTION HEADS', ly.attn.x + ly.attn.w / 2, layout.marginTop - 8);
-  ctx.fillText('MLP', ly.mlp.x + ly.mlp.w / 2, layout.marginTop - 8);
-  ctx.fillText('LN', ly.ln.x + ly.ln.w / 2, layout.marginTop - 8);
+  ctx.font = '8px Courier New';
+  ctx.fillStyle = '#666';
+  ctx.fillText('LN1', ly0.ln1.x + ly0.ln1.w / 2, layout.marginTop - 6);
+  ctx.fillText('ATTENTION', ly0.attn.x + ly0.attn.w / 2, layout.marginTop - 6);
+  ctx.fillText('+', ly0.add1.x + ly0.add1.w / 2, layout.marginTop - 6);
+  ctx.fillText('LN2', ly0.ln2.x + ly0.ln2.w / 2, layout.marginTop - 6);
+  ctx.fillText('MLP', ly0.mlp.x + ly0.mlp.w / 2, layout.marginTop - 6);
+  ctx.fillText('+', ly0.add2.x + ly0.add2.w / 2, layout.marginTop - 6);
 
   // Draw each layer
   for (const layer of layout.layers) {
-    const intensity = layerIntensities[layer.idx] || { attn: 0, mlp: 0, ln: 0 };
+    const intensity = li[layer.idx] || { attn: 0, mlp: 0, ln: 0 };
 
     // Layer label
-    ctx.fillStyle = '#444';
-    ctx.font = '9px Courier New';
+    ctx.fillStyle = '#555';
+    ctx.font = '8px Courier New';
     ctx.textAlign = 'right';
-    ctx.fillText(`L${layer.idx}`, layer.attn.x - 6, layer.y + layout.layerHeight / 2 + 3);
+    ctx.fillText(`L${layer.idx}`, layer.ln1.x - 4, layer.y + lh / 2 + 3);
 
-    // Attention heads
+    // -- LN1 block --
+    drawBlock(layer.ln1, intensity.ln, 'ln');
+
+    // -- Attention heads --
     for (let h = 0; h < layer.attn.heads.length; h++) {
       const head = layer.attn.heads[h];
-      // Each head can have slightly different intensity for visual interest
-      const headIntensity = intensity.attn * (0.7 + 0.3 * Math.sin(h * 1.7 + layer.idx * 0.5));
-      ctx.fillStyle = intensityToColor(headIntensity, 'attn');
+      const hi = intensity.attn * (0.7 + 0.3 * Math.sin(h * 1.7 + layer.idx * 0.5));
+      ctx.fillStyle = intensityToColor(hi, 'attn');
       ctx.fillRect(head.x, head.y, head.w, head.h);
-
-      // Subtle border on each head for definition
-      ctx.strokeStyle = borderColor(headIntensity, 'attn');
+      ctx.strokeStyle = borderColor(hi, 'attn');
+      ctx.lineWidth = 0.5;
       ctx.strokeRect(head.x, head.y, head.w, head.h);
-
-      // Glow effect when active
-      if (headIntensity > 0.4) {
-        ctx.shadowColor = '#ff8850';
-        ctx.shadowBlur = headIntensity * 10;
-        ctx.fillRect(head.x, head.y, head.w, head.h);
-        ctx.shadowBlur = 0;
-      }
+      ctx.lineWidth = 1;
     }
-
-    // Attention block border -- always visible
+    // Outer attn border
     ctx.strokeStyle = borderColor(intensity.attn, 'attn');
-    ctx.lineWidth = intensity.attn > 0.3 ? 2 : 1;
     ctx.strokeRect(layer.attn.x, layer.attn.y, layer.attn.w, layer.attn.h);
-    ctx.lineWidth = 1;
 
-    // MLP block
-    ctx.fillStyle = intensityToColor(intensity.mlp, 'mlp');
-    ctx.fillRect(layer.mlp.x, layer.mlp.y, layer.mlp.w, layer.mlp.h);
-    if (intensity.mlp > 0.4) {
-      ctx.shadowColor = '#4488ff';
-      ctx.shadowBlur = intensity.mlp * 12;
-      ctx.fillRect(layer.mlp.x, layer.mlp.y, layer.mlp.w, layer.mlp.h);
-      ctx.shadowBlur = 0;
-    }
-    ctx.strokeStyle = borderColor(intensity.mlp, 'mlp');
-    ctx.lineWidth = intensity.mlp > 0.3 ? 2 : 1;
-    ctx.strokeRect(layer.mlp.x, layer.mlp.y, layer.mlp.w, layer.mlp.h);
-    ctx.lineWidth = 1;
+    // -- Residual add 1 (circle with +) --
+    drawAddCircle(layer.add1, Math.max(intensity.attn, intensity.ln));
 
-    // Layer norm block
-    ctx.fillStyle = intensityToColor(intensity.ln, 'ln');
-    ctx.fillRect(layer.ln.x, layer.ln.y, layer.ln.w, layer.ln.h);
-    if (intensity.ln > 0.4) {
-      ctx.shadowColor = '#aa44ff';
-      ctx.shadowBlur = intensity.ln * 12;
-      ctx.fillRect(layer.ln.x, layer.ln.y, layer.ln.w, layer.ln.h);
-      ctx.shadowBlur = 0;
-    }
-    ctx.strokeStyle = borderColor(intensity.ln, 'ln');
-    ctx.lineWidth = intensity.ln > 0.3 ? 2 : 1;
-    ctx.strokeRect(layer.ln.x, layer.ln.y, layer.ln.w, layer.ln.h);
-    ctx.lineWidth = 1;
+    // -- LN2 block --
+    drawBlock(layer.ln2, intensity.ln, 'ln');
 
-    // Connection lines between layers (residual stream)
+    // -- MLP block --
+    drawBlock(layer.mlp, intensity.mlp, 'mlp');
+
+    // -- Residual add 2 --
+    drawAddCircle(layer.add2, Math.max(intensity.mlp, intensity.ln));
+
+    // Connection to next layer (thin line from add2 down to next ln1)
     if (layer.idx < layout.nLayers - 1) {
-      const nextLayer = layout.layers[layer.idx + 1];
-      const combinedIntensity = Math.max(intensity.attn, intensity.mlp) * 0.5;
-      ctx.strokeStyle = `rgba(0,255,170,${0.05 + combinedIntensity * 0.3})`;
-      ctx.lineWidth = 1 + combinedIntensity * 2;
+      const next = layout.layers[layer.idx + 1];
+      const ci = Math.max(intensity.attn, intensity.mlp) * 0.4;
+      ctx.strokeStyle = `rgba(0,255,170,${0.1 + ci * 0.4})`;
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(layer.attn.x + layer.attn.w / 2, layer.y + layout.layerHeight);
-      ctx.lineTo(nextLayer.attn.x + nextLayer.attn.w / 2, nextLayer.y);
+      // Line from bottom-center of this layer to top-center of next
+      const midX = W / 2;
+      ctx.moveTo(midX, layer.y + lh + 1);
+      ctx.lineTo(midX, next.y - 1);
       ctx.stroke();
       ctx.lineWidth = 1;
     }
   }
 
-  // Draw data flow arrow on the side
-  const arrowX = layout.layerLeft - 25;
+  // Bottom label
+  const bottomY = layout.layers[layout.nLayers - 1].y + lh + 16;
+  ctx.fillStyle = '#555';
+  ctx.font = '10px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillText('OUTPUT LOGITS', W / 2, bottomY);
+
+  // Flow arrow on left
+  const arrowX = layout.diagramLeft - 15;
+  const topY = layout.marginTop;
+  const botY = layout.layers[layout.nLayers - 1].y + lh;
   ctx.strokeStyle = '#333';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(arrowX, layout.marginTop);
-  ctx.lineTo(arrowX, layout.marginTop + layout.nLayers * layout.layerHeight);
+  ctx.moveTo(arrowX, topY);
+  ctx.lineTo(arrowX, botY);
   ctx.stroke();
-  // Arrow head
   ctx.beginPath();
-  ctx.moveTo(arrowX - 4, layout.marginTop + layout.nLayers * layout.layerHeight - 8);
-  ctx.lineTo(arrowX, layout.marginTop + layout.nLayers * layout.layerHeight);
-  ctx.lineTo(arrowX + 4, layout.marginTop + layout.nLayers * layout.layerHeight - 8);
+  ctx.moveTo(arrowX - 3, botY - 6);
+  ctx.lineTo(arrowX, botY);
+  ctx.lineTo(arrowX + 3, botY - 6);
   ctx.stroke();
-  ctx.fillStyle = '#444';
-  ctx.font = '8px Courier New';
-  ctx.textAlign = 'center';
-  ctx.save();
-  ctx.translate(arrowX - 10, layout.marginTop + layout.nLayers * layout.layerHeight / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillText('DATA FLOW', 0, 0);
-  ctx.restore();
-
-  // Bottom label
-  ctx.fillStyle = '#333';
-  ctx.font = '10px Courier New';
-  ctx.textAlign = 'center';
-  const bottomY = layout.marginTop + layout.nLayers * layout.layerHeight + 20;
-  ctx.fillText('OUTPUT LOGITS', W / 2, bottomY);
-
-  // Top label
-  ctx.fillText('INPUT EMBEDDINGS', W / 2, layout.marginTop - 25);
 
   animFrame = requestAnimationFrame(render);
+}
+
+function drawBlock(rect, intensity, type) {
+  ctx.fillStyle = intensityToColor(intensity, type);
+  ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+  ctx.strokeStyle = borderColor(intensity, type);
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+  ctx.lineWidth = 1;
+  if (intensity > 0.5) {
+    const glowColor = type === 'mlp' ? '#4488ff' : type === 'attn' ? '#ff8850' : '#aa44ff';
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = intensity * 6;
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.shadowBlur = 0;
+  }
+}
+
+function drawAddCircle(rect, intensity) {
+  const cx = rect.x + rect.w / 2;
+  const cy = rect.y + rect.h / 2;
+  const r = Math.min(rect.w, rect.h) / 2 - 1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(0,255,170,${0.05 + intensity * 0.15})`;
+  ctx.fill();
+  ctx.strokeStyle = `rgba(0,255,170,${0.2 + intensity * 0.4})`;
+  ctx.lineWidth = 0.5;
+  ctx.stroke();
+  ctx.lineWidth = 1;
+  // + sign
+  ctx.strokeStyle = `rgba(0,255,170,${0.3 + intensity * 0.5})`;
+  ctx.beginPath();
+  ctx.moveTo(cx - 2, cy);
+  ctx.lineTo(cx + 2, cy);
+  ctx.moveTo(cx, cy - 2);
+  ctx.lineTo(cx, cy + 2);
+  ctx.stroke();
 }
 
 // =========================================================================
@@ -779,30 +790,21 @@ canvas.addEventListener('mousemove', (e) => {
   let found = false;
 
   for (const layer of layout.layers) {
-    // Check attention
-    if (x >= layer.attn.x && x <= layer.attn.x + layer.attn.w &&
-        y >= layer.attn.y && y <= layer.attn.y + layer.attn.h) {
-      const info = getLayerInfo(layer.idx, 'attn');
-      showTooltip(e.clientX, e.clientY, `Layer ${layer.idx} Attention`, info);
-      found = true;
-      break;
+    const checks = [
+      { r: layer.attn, comp: 'attn', label: 'Attention' },
+      { r: layer.mlp, comp: 'mlp', label: 'MLP' },
+      { r: layer.ln1, comp: 'ln', label: 'LayerNorm 1' },
+      { r: layer.ln2, comp: 'ln', label: 'LayerNorm 2' },
+    ];
+    for (const { r, comp, label } of checks) {
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
+        const info = getLayerInfo(layer.idx, comp);
+        showTooltip(e.clientX, e.clientY, `Layer ${layer.idx} ${label}`, info);
+        found = true;
+        break;
+      }
     }
-    // Check MLP
-    if (x >= layer.mlp.x && x <= layer.mlp.x + layer.mlp.w &&
-        y >= layer.mlp.y && y <= layer.mlp.y + layer.mlp.h) {
-      const info = getLayerInfo(layer.idx, 'mlp');
-      showTooltip(e.clientX, e.clientY, `Layer ${layer.idx} MLP`, info);
-      found = true;
-      break;
-    }
-    // Check LN
-    if (x >= layer.ln.x && x <= layer.ln.x + layer.ln.w &&
-        y >= layer.ln.y && y <= layer.ln.y + layer.ln.h) {
-      const info = getLayerInfo(layer.idx, 'ln');
-      showTooltip(e.clientX, e.clientY, `Layer ${layer.idx} LayerNorm`, info);
-      found = true;
-      break;
-    }
+    if (found) break;
   }
 
   if (!found) tooltip.style.display = 'none';
