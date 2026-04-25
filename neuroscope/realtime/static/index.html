@@ -300,11 +300,11 @@
     </div>
 
     <div class="speed-slider-section">
-      <label>Animation Speed</label>
+      <label>Transition Speed</label>
       <div class="slider-row">
-        <span class="slider-label">Slow</span>
-        <input type="range" id="speed-slider" min="1" max="10" value="4" step="1">
-        <span class="slider-label">Fast</span>
+        <span class="slider-label">Smooth</span>
+        <input type="range" id="speed-slider" min="1" max="10" value="5" step="1">
+        <span class="slider-label">Snappy</span>
       </div>
     </div>
 
@@ -370,7 +370,6 @@ let startTime = 0;
 // Activation data
 let targetActivations = {};
 let activationQueue = [];
-let activeWave = null;
 
 // Canvas
 const canvas = document.getElementById('brain-canvas');
@@ -525,136 +524,128 @@ function buildDiagram() {
   const conns = [];     // connections (lines/arrows)
 
   // Layout constants
-  const marginTop = 35;
-  const marginBottom = 35;
+  const marginTop = 30;
+  const marginBottom = 30;
   const availH = H - marginTop - marginBottom;
 
-  // Center column X position
-  const centerX = W / 2;
+  // Main trunk is slightly left of center to leave room for skip connections on the right
+  const trunkX = W * 0.42;
 
-  // Each layer has: LN1, ATTN, ADD1, LN2, MLP, ADD2 = 6 components
-  // Plus input embed and output logits = 2 more
-  // Total vertical slots = nLayers * 6 + 2
-  // But we group them tighter: each layer is one "block" visually
-
-  // Block dimensions -- keep everything small and compact
-  const layerH = availH / (nLayers + 1.5); // height per layer
-  const compH = Math.min(14, layerH / 7);  // component height
-  const compGap = Math.max(1, (layerH - compH * 6) / 7); // gap between components
-  const mainW = Math.min(140, W * 0.22);   // width of main blocks (LN, MLP)
-  const attnW = Math.min(180, W * 0.3);    // width of attention block (wider, has heads)
-  const addW = Math.min(30, W * 0.06);     // width of add blocks
-  const headW = Math.max(6, (attnW - 4) / nHeads - 1); // per-head width inside attn
+  // Block dimensions -- compact
+  const layerH = availH / (nLayers + 1.5);
+  const compH = Math.min(12, layerH / 7);
+  const compGap = Math.max(1, (layerH - compH * 6) / 7);
+  const mainW = Math.min(120, W * 0.2);    // LN, MLP width
+  const attnW = Math.min(160, W * 0.26);   // attention block (wider, has heads)
+  const addW = Math.min(60, W * 0.1);      // add blocks -- wider so they're visible as merge points
+  const headW = Math.max(5, (attnW - 4) / nHeads - 1);
 
   // Residual bypass offset (how far right the skip line runs)
-  const skipOffsetX = Math.min(130, W * 0.2);
+  const skipOffsetX = Math.min(110, W * 0.16);
 
   // Input block
   const inputY = marginTop;
   blocks.push({
-    id: 'input', type: 'input', label: 'Token Embedding + Positional Encoding',
-    x: centerX - mainW/2, y: inputY, w: mainW, h: compH + 2, layer: -1,
+    id: 'input', type: 'input', label: 'Embed + Pos',
+    x: trunkX - mainW/2, y: inputY, w: mainW, h: compH + 2, layer: -1,
   });
 
   let curY = inputY + compH + 2 + compGap * 2;
 
   for (let L = 0; L < nLayers; L++) {
-    const layerStartY = curY;
-
     // LN1
     const ln1Id = `L${L}_ln1`;
     blocks.push({
-      id: ln1Id, type: 'ln', label: 'LayerNorm',
-      x: centerX - mainW/2, y: curY, w: mainW, h: compH, layer: L,
+      id: ln1Id, type: 'ln', label: 'LN1',
+      x: trunkX - mainW/2, y: curY, w: mainW, h: compH, layer: L,
     });
     curY += compH + compGap;
 
     // Multi-Head Attention (contains sub-heads)
     const attnId = `L${L}_attn`;
-    const attnH = compH + 4; // slightly taller to show heads
+    const attnH = compH + 4;
     blocks.push({
-      id: attnId, type: 'attn', label: `Multi-Head Attention`,
-      x: centerX - attnW/2, y: curY, w: attnW, h: attnH, layer: L,
+      id: attnId, type: 'attn', label: `Attn (${nHeads}h)`,
+      x: trunkX - attnW/2, y: curY, w: attnW, h: attnH, layer: L,
       nHeads: nHeads, headW: headW,
     });
-    // Individual head sub-blocks (for per-head intensity)
     for (let h = 0; h < nHeads; h++) {
       blocks.push({
         id: `L${L}_h${h}`, type: 'head', label: `H${h}`,
-        x: centerX - attnW/2 + 2 + h * (headW + 1),
+        x: trunkX - attnW/2 + 2 + h * (headW + 1),
         y: curY + 2, w: headW, h: attnH - 4,
         layer: L, head: h, parentId: attnId,
       });
     }
     curY += attnH + compGap;
 
-    // Residual Add 1
+    // Residual Add 1 -- x + Attn(LN1(x))
     const add1Id = `L${L}_add1`;
     blocks.push({
-      id: add1Id, type: 'add', label: '+',
-      x: centerX - addW/2, y: curY, w: addW, h: compH, layer: L,
+      id: add1Id, type: 'add', label: '+ add',
+      x: trunkX - addW/2, y: curY, w: addW, h: compH, layer: L,
     });
     curY += compH + compGap;
 
     // LN2
     const ln2Id = `L${L}_ln2`;
     blocks.push({
-      id: ln2Id, type: 'ln', label: 'LayerNorm',
-      x: centerX - mainW/2, y: curY, w: mainW, h: compH, layer: L,
+      id: ln2Id, type: 'ln', label: 'LN2',
+      x: trunkX - mainW/2, y: curY, w: mainW, h: compH, layer: L,
     });
     curY += compH + compGap;
 
     // MLP / FFN
     const mlpId = `L${L}_mlp`;
     blocks.push({
-      id: mlpId, type: 'mlp', label: 'FFN (MLP)',
-      x: centerX - mainW/2, y: curY, w: mainW, h: compH + 2, layer: L,
+      id: mlpId, type: 'mlp', label: 'MLP',
+      x: trunkX - mainW/2, y: curY, w: mainW, h: compH + 2, layer: L,
     });
     curY += compH + 2 + compGap;
 
-    // Residual Add 2
+    // Residual Add 2 -- x + MLP(LN2(x))
     const add2Id = `L${L}_add2`;
     blocks.push({
-      id: add2Id, type: 'add', label: '+',
-      x: centerX - addW/2, y: curY, w: addW, h: compH, layer: L,
+      id: add2Id, type: 'add', label: '+ add',
+      x: trunkX - addW/2, y: curY, w: addW, h: compH, layer: L,
     });
     curY += compH + compGap * 2;
 
     // --- Connections within this layer ---
-    // Previous output -> LN1 (main trunk)
     const prevId = L === 0 ? 'input' : `L${L-1}_add2`;
+
+    // Main forward path: prev -> LN1 -> Attn -> Add1 -> LN2 -> MLP -> Add2
     conns.push({ id: `c_${prevId}_${ln1Id}`, from: prevId, to: ln1Id, type: 'trunk' });
-
-    // LN1 -> Attention
     conns.push({ id: `c_${ln1Id}_${attnId}`, from: ln1Id, to: attnId, type: 'forward' });
-
-    // Attention -> Add1
     conns.push({ id: `c_${attnId}_${add1Id}`, from: attnId, to: add1Id, type: 'forward' });
-
-    // Skip: previous output -> Add1 (residual around attention)
-    conns.push({ id: `c_skip1_L${L}`, from: prevId, to: add1Id, type: 'skip', skipX: centerX + skipOffsetX });
-
-    // Add1 -> LN2
     conns.push({ id: `c_${add1Id}_${ln2Id}`, from: add1Id, to: ln2Id, type: 'trunk' });
-
-    // LN2 -> MLP
     conns.push({ id: `c_${ln2Id}_${mlpId}`, from: ln2Id, to: mlpId, type: 'forward' });
-
-    // MLP -> Add2
     conns.push({ id: `c_${mlpId}_${add2Id}`, from: mlpId, to: add2Id, type: 'forward' });
 
-    // Skip: Add1 -> Add2 (residual around MLP)
-    conns.push({ id: `c_skip2_L${L}`, from: add1Id, to: add2Id, type: 'skip', skipX: centerX + skipOffsetX });
+    // Residual skip 1: prev -> Add1 (bypasses LN1 + Attention)
+    conns.push({ id: `c_skip1_L${L}`, from: prevId, to: add1Id, type: 'skip', skipX: trunkX + skipOffsetX });
+
+    // Residual skip 2: Add1 -> Add2 (bypasses LN2 + MLP)
+    conns.push({ id: `c_skip2_L${L}`, from: add1Id, to: add2Id, type: 'skip', skipX: trunkX + skipOffsetX + 12 });
   }
+
+  // Final LayerNorm (GPT-2 has a final LN after all layers)
+  const finalLnId = 'final_ln';
+  blocks.push({
+    id: finalLnId, type: 'ln', label: 'Final LN',
+    x: trunkX - mainW/2, y: curY, w: mainW, h: compH, layer: modelInfo.n_layers,
+  });
+  const lastAdd = `L${nLayers-1}_add2`;
+  conns.push({ id: `c_${lastAdd}_finalln`, from: lastAdd, to: finalLnId, type: 'trunk' });
+  curY += compH + compGap;
 
   // Output block
   const outputId = 'output';
   blocks.push({
-    id: outputId, type: 'output', label: 'Output Logits',
-    x: centerX - mainW/2, y: curY, w: mainW, h: compH + 2, layer: modelInfo.n_layers,
+    id: outputId, type: 'output', label: 'Logits',
+    x: trunkX - mainW/2, y: curY, w: mainW, h: compH + 2, layer: modelInfo.n_layers,
   });
-  const lastAdd = `L${nLayers-1}_add2`;
-  conns.push({ id: `c_${lastAdd}_output`, from: lastAdd, to: outputId, type: 'trunk' });
+  conns.push({ id: `c_finalln_output`, from: finalLnId, to: outputId, type: 'trunk' });
 
   // Build lookup
   const blockMap = {};
@@ -663,166 +654,97 @@ function buildDiagram() {
   diagram = { blocks, conns, blockMap };
 
   // Init intensities
-  for (const b of blocks) blockIntensities[b.id] = 0;
+  for (const b of blocks) {
+    blockIntensities[b.id] = 0;
+    blockTargetIntensities[b.id] = 0;
+  }
   for (const c of conns) connIntensities[c.id] = 0;
 }
 
 // =========================================================================
-// Animation
+// Animation -- no pulsing, just smooth transitions to current activation state
 // =========================================================================
 function lerp(a, b, t) { return a + (b - a) * t; }
 
-function easeInOut(t) {
-  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-}
+// Current target intensities per block (set directly from activation data)
+let blockTargetIntensities = {};
 
 function getSpeedFactor() {
   return parseInt(document.getElementById('speed-slider').value);
 }
 
-function getWaveDuration() {
-  const speed = getSpeedFactor();
-  return 3300 - speed * 300;
-}
-
 // =========================================================================
-// Process activation waves
+// Process activations -- direct mapping, no waves or envelopes
 // =========================================================================
-function processWaves(now) {
+function processActivations(now) {
   if (!diagram) return;
 
+  // Speed controls how fast we lerp toward target (transition smoothness)
   const speed = getSpeedFactor();
-  const decayRate = 0.006 + speed * 0.003;
-  const riseRate = 0.05 + speed * 0.03;
+  const lerpRate = 0.02 + speed * 0.02; // 0.04 at speed=1, 0.22 at speed=10
 
-  // Start next wave from queue
-  if (!activeWave && activationQueue.length > 0) {
+  // Process any queued activation snapshots -- just use the latest one
+  while (activationQueue.length > 0) {
     const snapshot = activationQueue.shift();
     const acts = snapshot.activations;
 
-    const layerTargets = {};
-    for (let i = 0; i < modelInfo.n_layers; i++) {
-      layerTargets[i] = { attn: 0, mlp: 0, ln: 0, heads: [] };
-      for (let h = 0; h < modelInfo.n_heads; h++) {
-        layerTargets[i].heads.push(0);
-      }
-    }
+    // Reset targets
+    for (const b of diagram.blocks) blockTargetIntensities[b.id] = 0;
 
+    // Map activations directly to block targets
     for (const [name, info] of Object.entries(acts)) {
       const idx = info.layer_idx;
       if (idx < 0 || idx >= modelInfo.n_layers) continue;
       const mag = Math.min(1, (info.mean_magnitude || 0) / 30);
 
       if (name.includes('attn')) {
-        layerTargets[idx].attn = Math.max(layerTargets[idx].attn, mag);
+        blockTargetIntensities[`L${idx}_attn`] = Math.max(blockTargetIntensities[`L${idx}_attn`] || 0, mag);
+        // Per-head
         if (info.head_data) {
           for (let h = 0; h < info.head_data.length && h < modelInfo.n_heads; h++) {
-            layerTargets[idx].heads[h] = Math.min(1, info.head_data[h] / 20);
+            blockTargetIntensities[`L${idx}_h${h}`] = Math.min(1, info.head_data[h] / 20);
           }
         } else {
           for (let h = 0; h < modelInfo.n_heads; h++) {
-            layerTargets[idx].heads[h] = mag * (0.5 + 0.5 * Math.random());
+            blockTargetIntensities[`L${idx}_h${h}`] = mag * (0.5 + 0.5 * Math.random());
           }
         }
+        // LN1 fires proportionally with attention
+        blockTargetIntensities[`L${idx}_ln1`] = Math.max(blockTargetIntensities[`L${idx}_ln1`] || 0, mag * 0.6);
+        // Add1 is sum node
+        blockTargetIntensities[`L${idx}_add1`] = Math.max(blockTargetIntensities[`L${idx}_add1`] || 0, mag * 0.5);
       } else if (name.includes('mlp')) {
-        layerTargets[idx].mlp = Math.max(layerTargets[idx].mlp, mag);
+        blockTargetIntensities[`L${idx}_mlp`] = Math.max(blockTargetIntensities[`L${idx}_mlp`] || 0, mag);
+        // LN2 fires proportionally with MLP
+        blockTargetIntensities[`L${idx}_ln2`] = Math.max(blockTargetIntensities[`L${idx}_ln2`] || 0, mag * 0.6);
+        // Add2 is sum node
+        blockTargetIntensities[`L${idx}_add2`] = Math.max(blockTargetIntensities[`L${idx}_add2`] || 0, mag * 0.5);
       } else if (name.includes('ln')) {
-        layerTargets[idx].ln = Math.max(layerTargets[idx].ln, mag);
+        // Direct LN activation
+        if (name.includes('ln_1') || name.includes('ln1')) {
+          blockTargetIntensities[`L${idx}_ln1`] = Math.max(blockTargetIntensities[`L${idx}_ln1`] || 0, mag);
+        } else {
+          blockTargetIntensities[`L${idx}_ln2`] = Math.max(blockTargetIntensities[`L${idx}_ln2`] || 0, mag);
+        }
       }
     }
+
+    // Input/output get moderate constant activation during generation
+    blockTargetIntensities['input'] = 0.3;
+    blockTargetIntensities['output'] = 0.3;
 
     // Store for tooltips
     targetActivations = {};
     for (const [name, info] of Object.entries(acts)) {
       targetActivations[name] = info;
     }
-
-    const nLayers = modelInfo.n_layers;
-    const waveDur = getWaveDuration();
-    const layerDelay = waveDur / (nLayers + 4);
-
-    activeWave = { startTime: now, layerTargets, layerDelay, waveDur };
   }
 
-  // Compute target intensities
-  const blockTargets = {};
-  for (const b of diagram.blocks) blockTargets[b.id] = 0;
-
-  if (activeWave) {
-    const nLayers = modelInfo.n_layers;
-
-    for (let L = 0; L < nLayers; L++) {
-      const lt = activeWave.layerTargets[L];
-      const waveDelay = L * activeWave.layerDelay;
-      const elapsed = now - activeWave.startTime - waveDelay;
-
-      if (elapsed <= 0) continue;
-
-      const subDelay = activeWave.layerDelay / 6;
-      const envDur = activeWave.layerDelay * 2;
-
-      // Envelope: ramp up then hold, no oscillation
-      function envelope(elapsedSub) {
-        if (elapsedSub <= 0) return 0;
-        const rampUp = Math.min(1, elapsedSub / envDur);
-        const fadeOut = Math.max(0, 1 - Math.max(0, elapsedSub - envDur) / (envDur * 2));
-        return rampUp * fadeOut;
-      }
-
-      // LN1
-      blockTargets[`L${L}_ln1`] = lt.ln * envelope(elapsed);
-
-      // Attention (overall)
-      const attnElapsed = elapsed - subDelay;
-      blockTargets[`L${L}_attn`] = lt.attn * envelope(attnElapsed);
-
-      // Per-head
-      for (let h = 0; h < modelInfo.n_heads; h++) {
-        blockTargets[`L${L}_h${h}`] = lt.heads[h] * envelope(attnElapsed);
-      }
-
-      // Add1
-      const add1Elapsed = elapsed - subDelay * 2;
-      blockTargets[`L${L}_add1`] = Math.max(lt.attn, lt.ln) * envelope(add1Elapsed) * 0.7;
-
-      // LN2
-      const ln2Elapsed = elapsed - subDelay * 3;
-      blockTargets[`L${L}_ln2`] = lt.ln * envelope(ln2Elapsed);
-
-      // MLP
-      const mlpElapsed = elapsed - subDelay * 4;
-      blockTargets[`L${L}_mlp`] = lt.mlp * envelope(mlpElapsed);
-
-      // Add2
-      const add2Elapsed = elapsed - subDelay * 5;
-      blockTargets[`L${L}_add2`] = Math.max(lt.mlp, lt.ln) * envelope(add2Elapsed) * 0.7;
-    }
-
-    // Input/output
-    const inputElapsed = now - activeWave.startTime;
-    if (inputElapsed > 0) {
-      blockTargets['input'] = Math.min(1, inputElapsed / (activeWave.layerDelay * 2)) * 0.4;
-    }
-    const outputDelay = nLayers * activeWave.layerDelay;
-    const outputElapsed = now - activeWave.startTime - outputDelay;
-    if (outputElapsed > 0) {
-      blockTargets['output'] = Math.min(1, outputElapsed / (activeWave.layerDelay * 2)) * 0.4;
-    }
-
-    if (now - activeWave.startTime > activeWave.waveDur * 1.5) {
-      activeWave = null;
-    }
-  }
-
-  // Smooth toward targets
+  // Smooth lerp toward target values -- no pulsing, just smooth transitions
   for (const b of diagram.blocks) {
-    const target = blockTargets[b.id] || 0;
+    const target = blockTargetIntensities[b.id] || 0;
     const cur = blockIntensities[b.id] || 0;
-    if (target > cur) {
-      blockIntensities[b.id] = lerp(cur, target, riseRate);
-    } else {
-      blockIntensities[b.id] = Math.max(0, cur - decayRate);
-    }
+    blockIntensities[b.id] = lerp(cur, target, lerpRate);
   }
 
   // Connection intensities: average of source and dest block
@@ -831,11 +753,7 @@ function processWaves(now) {
     const dstI = blockIntensities[c.to] || 0;
     const target = (srcI + dstI) / 2;
     const cur = connIntensities[c.id] || 0;
-    if (target > cur) {
-      connIntensities[c.id] = lerp(cur, target, riseRate);
-    } else {
-      connIntensities[c.id] = Math.max(0, cur - decayRate);
-    }
+    connIntensities[c.id] = lerp(cur, target, lerpRate);
   }
 }
 
@@ -894,7 +812,7 @@ function render() {
     return;
   }
 
-  processWaves(now);
+  processActivations(now);
 
   // --- Draw connections first (behind blocks) ---
   for (const c of diagram.conns) {
@@ -986,13 +904,11 @@ function render() {
 
     // Label
     ctx.fillStyle = `rgba(220,220,230,${0.4 + intensity * 0.5})`;
-    ctx.font = `${Math.min(9, b.h * 0.6)}px Courier New`;
+    ctx.font = `${Math.min(9, b.h * 0.65)}px Courier New`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    if (b.type === 'add') {
-      ctx.fillText('+', b.x + b.w/2, b.y + b.h/2);
-    } else if (b.type !== 'attn') {
+    if (b.type !== 'attn') {
       ctx.fillText(b.label, b.x + b.w/2, b.y + b.h/2);
     }
 
@@ -1054,15 +970,15 @@ canvas.addEventListener('mousemove', (e) => {
       } else if (b.type === 'attn') {
         title = `Layer ${b.layer} Multi-Head Attention`;
       } else if (b.type === 'mlp') {
-        title = `Layer ${b.layer} FFN (MLP)`;
+        title = `Layer ${b.layer} MLP / FFN`;
       } else if (b.type === 'ln') {
-        title = `Layer ${b.layer} LayerNorm`;
+        title = b.id === 'final_ln' ? 'Final LayerNorm' : `Layer ${b.layer} LayerNorm`;
       } else if (b.type === 'add') {
-        title = `Layer ${b.layer} Residual Add`;
+        title = `Layer ${b.layer} Residual Add (x + f(x))`;
       } else if (b.type === 'input') {
         title = 'Token + Position Embeddings';
       } else if (b.type === 'output') {
-        title = 'Output Logits';
+        title = 'Output Logits (unembedding)';
       }
 
       const infos = getBlockInfo(b);
