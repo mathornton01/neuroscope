@@ -8,62 +8,60 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    background: #111118;
+    background: #0a0a10;
     color: #e0e0e0;
     font-family: 'Courier New', monospace;
-    overflow-x: hidden;
+    overflow: hidden;
   }
 
   .header {
     text-align: center;
-    padding: 20px;
+    padding: 12px;
     border-bottom: 1px solid #1a1a2e;
   }
   .header h1 {
-    font-size: 24px;
+    font-size: 20px;
     color: #00ffaa;
     letter-spacing: 3px;
   }
   .header .subtitle {
-    font-size: 12px;
-    color: #666;
-    margin-top: 4px;
+    font-size: 11px;
+    color: #555;
+    margin-top: 2px;
   }
 
   .main-container {
     display: flex;
-    height: calc(100vh - 80px);
+    height: calc(100vh - 70px);
   }
 
-  /* Left panel -- controls and output */
   .left-panel {
-    width: 350px;
+    width: 320px;
     border-right: 1px solid #1a1a2e;
     display: flex;
     flex-direction: column;
-    padding: 15px;
+    padding: 12px;
+    flex-shrink: 0;
   }
 
-  .prompt-section {
-    margin-bottom: 15px;
-  }
+  .prompt-section { margin-bottom: 10px; }
   .prompt-section label {
     display: block;
-    font-size: 11px;
+    font-size: 10px;
     color: #00ffaa;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
   .prompt-section textarea {
     width: 100%;
-    height: 80px;
+    height: 60px;
     background: #111;
     border: 1px solid #2a2a3e;
     color: #e0e0e0;
     font-family: 'Courier New', monospace;
-    font-size: 13px;
-    padding: 8px;
+    font-size: 12px;
+    padding: 6px;
     resize: none;
     border-radius: 4px;
   }
@@ -74,18 +72,18 @@
 
   .controls {
     display: flex;
-    gap: 8px;
-    margin-bottom: 15px;
+    gap: 6px;
+    margin-bottom: 10px;
   }
   .controls button {
     flex: 1;
-    padding: 8px;
+    padding: 7px;
     background: #00ffaa;
     color: #0a0a0f;
     border: none;
     font-family: 'Courier New', monospace;
     font-weight: bold;
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
     border-radius: 4px;
     letter-spacing: 1px;
@@ -104,50 +102,48 @@
 
   .param-row {
     display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: 8px;
+    margin-bottom: 10px;
   }
   .param-row label {
-    font-size: 10px;
+    font-size: 9px;
     color: #888;
     display: block;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
   }
   .param-row input {
-    width: 80px;
+    width: 70px;
     background: #111;
     border: 1px solid #2a2a3e;
     color: #e0e0e0;
-    padding: 4px 6px;
+    padding: 3px 5px;
     font-family: 'Courier New', monospace;
-    font-size: 12px;
+    font-size: 11px;
     border-radius: 3px;
   }
 
-  .speed-slider-section {
-    margin-bottom: 15px;
-  }
+  .speed-slider-section { margin-bottom: 10px; }
   .speed-slider-section label {
     display: block;
-    font-size: 10px;
+    font-size: 9px;
     color: #888;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
   }
   .slider-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
   .slider-label {
-    font-size: 9px;
+    font-size: 8px;
     color: #555;
-    min-width: 28px;
+    min-width: 24px;
   }
   .slider-row input[type="range"] {
     flex: 1;
     -webkit-appearance: none;
     appearance: none;
-    height: 4px;
+    height: 3px;
     background: #2a2a3e;
     border-radius: 2px;
     outline: none;
@@ -155,8 +151,8 @@
   .slider-row input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background: #00ffaa;
     cursor: pointer;
@@ -167,19 +163,19 @@
     overflow-y: auto;
   }
   .output-section .label {
-    font-size: 11px;
+    font-size: 10px;
     color: #00ffaa;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
   .output-text {
     background: #111;
     border: 1px solid #2a2a3e;
-    padding: 10px;
-    font-size: 13px;
-    line-height: 1.6;
-    min-height: 100px;
+    padding: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    min-height: 80px;
     border-radius: 4px;
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -188,8 +184,8 @@
   .output-text .generated-part { color: #00ffaa; }
   .output-text .cursor {
     display: inline-block;
-    width: 8px;
-    height: 14px;
+    width: 7px;
+    height: 13px;
     background: #00ffaa;
     animation: blink 0.5s infinite alternate;
     vertical-align: text-bottom;
@@ -197,89 +193,84 @@
   @keyframes blink { from { opacity: 1; } to { opacity: 0.2; } }
 
   .stats {
-    margin-top: 10px;
-    font-size: 11px;
+    margin-top: 6px;
+    font-size: 10px;
     color: #666;
   }
 
-  /* Right panel -- the brain visualization */
   .right-panel {
     flex: 1;
     position: relative;
     overflow: hidden;
   }
 
-  /* Canvas for the neural network */
   #brain-canvas {
     width: 100%;
     height: 100%;
   }
 
-  /* Layer info tooltip */
   .tooltip {
     display: none;
     position: absolute;
-    background: #1a1a2e;
+    background: rgba(15,15,25,0.95);
     border: 1px solid #00ffaa;
     padding: 8px 12px;
-    font-size: 11px;
+    font-size: 10px;
     border-radius: 4px;
     pointer-events: none;
     z-index: 100;
-    max-width: 250px;
+    max-width: 240px;
   }
   .tooltip .tip-name { color: #00ffaa; font-weight: bold; }
-  .tooltip .tip-val { color: #e0e0e0; }
+  .tooltip .tip-val { color: #ccc; margin-top: 2px; }
 
-  /* Status bar */
   .status-bar {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 24px;
-    background: #111;
+    height: 22px;
+    background: #0a0a10;
     border-top: 1px solid #1a1a2e;
     display: flex;
     align-items: center;
-    padding: 0 15px;
-    font-size: 10px;
+    padding: 0 12px;
+    font-size: 9px;
     color: #666;
-    gap: 20px;
+    gap: 15px;
   }
   .status-dot {
     display: inline-block;
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
-    margin-right: 5px;
+    margin-right: 4px;
   }
   .status-dot.connected { background: #00ffaa; }
   .status-dot.disconnected { background: #ff4444; }
   .status-dot.generating { background: #ffaa00; animation: pulse 0.5s infinite alternate; }
   @keyframes pulse { from { opacity: 1; } to { opacity: 0.3; } }
 
-  /* Legend */
   .legend {
     position: absolute;
-    top: 10px;
+    bottom: 10px;
     right: 10px;
     background: rgba(10,10,15,0.9);
     border: 1px solid #1a1a2e;
-    padding: 10px;
+    padding: 8px;
     border-radius: 4px;
-    font-size: 10px;
+    font-size: 9px;
   }
   .legend-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 4px;
+    gap: 5px;
+    margin-bottom: 3px;
   }
   .legend-swatch {
-    width: 20px;
-    height: 10px;
-    border-radius: 2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
   }
 </style>
 </head>
@@ -287,7 +278,7 @@
 
 <div class="header">
   <h1>NEUROSCOPE</h1>
-  <div class="subtitle">Real-Time LLM Brain Scanner | Functional MRI for Transformers</div>
+  <div class="subtitle">Real-Time Neural Pathway Visualization</div>
 </div>
 
 <div class="main-container">
@@ -335,20 +326,24 @@
     <canvas id="brain-canvas"></canvas>
     <div class="legend">
       <div class="legend-item">
-        <div class="legend-swatch" style="background: linear-gradient(90deg, #0a0a2e, #00ffaa);"></div>
-        <span>Activation (low -> high)</span>
+        <div class="legend-swatch" style="background: #ff7744;"></div>
+        <span>Attention</span>
       </div>
       <div class="legend-item">
-        <div class="legend-swatch" style="background: linear-gradient(90deg, #1a1a3e, #ff6644);"></div>
-        <span>Attention heads</span>
+        <div class="legend-swatch" style="background: #4499ff;"></div>
+        <span>MLP</span>
       </div>
       <div class="legend-item">
-        <div class="legend-swatch" style="background: linear-gradient(90deg, #1a1a3e, #4488ff);"></div>
-        <span>MLP layers</span>
+        <div class="legend-swatch" style="background: #aa55ff;"></div>
+        <span>LayerNorm</span>
       </div>
       <div class="legend-item">
-        <div class="legend-swatch" style="background: linear-gradient(90deg, #1a1a3e, #aa44ff);"></div>
-        <span>Layer norms</span>
+        <div class="legend-swatch" style="background: #00ffaa;"></div>
+        <span>Residual</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: #333; border: 1px solid #555;"></div>
+        <span>Pathway (brighter = stronger)</span>
       </div>
     </div>
     <div id="tooltip" class="tooltip"></div>
@@ -372,22 +367,21 @@ let modelInfo = null;
 let tokenCount = 0;
 let startTime = 0;
 
-// Activation history for smooth rendering
-let currentActivations = {};
+// Activation data
 let targetActivations = {};
-let animFrame = null;
-
-// Queued activation snapshots for wave animation
 let activationQueue = [];
-let activeWave = null;  // { activations, startTime, layerTimes[] }
-let lastRenderTime = 0;
+let activeWave = null;
 
 // Canvas
 const canvas = document.getElementById('brain-canvas');
 const ctx = canvas.getContext('2d');
 
-// Layout state
-let layout = null; // computed once we know model architecture
+// Graph layout
+let graph = null; // { nodes: [], edges: [] }
+
+// Per-node smoothed intensities
+let nodeIntensities = {};  // nodeId -> current intensity
+let edgeIntensities = {};  // edgeId -> current intensity
 
 // =========================================================================
 // WebSocket
@@ -419,8 +413,8 @@ function handleMessage(data) {
       modelInfo = data.model_info;
       document.getElementById('model-info').textContent =
         `${modelInfo.name} | ${modelInfo.n_layers}L x ${modelInfo.n_heads}H | d=${modelInfo.d_model}`;
-      computeLayout();
-      updateActivations(data.activations, true);
+      buildGraph();
+      queueActivations(data.activations);
       tokenCount = data.n_tokens;
       startTime = performance.now();
 
@@ -435,11 +429,10 @@ function handleMessage(data) {
       document.getElementById('speed-counter').textContent =
         `Speed: ${(data.step / elapsed).toFixed(1)} tok/s`;
 
-      // Append token to output
       const genSpan = document.querySelector('.generated-part');
       if (genSpan) genSpan.textContent += data.token;
 
-      updateActivations(data.activations, false);
+      queueActivations(data.activations);
       break;
 
     case 'generation_complete':
@@ -447,7 +440,6 @@ function handleMessage(data) {
       document.getElementById('scan-btn').disabled = false;
       document.getElementById('stop-btn').disabled = true;
       document.getElementById('status-dot').className = 'status-dot connected';
-      // Remove cursor
       const cursor = document.querySelector('.cursor');
       if (cursor) cursor.remove();
 
@@ -464,9 +456,8 @@ function handleMessage(data) {
   }
 }
 
-function updateActivations(activations, isPrompt) {
-  // Queue this activation snapshot as a wave to propagate through layers
-  activationQueue.push({ activations, isPrompt, queuedAt: performance.now() });
+function queueActivations(activations) {
+  activationQueue.push({ activations, queuedAt: performance.now() });
 }
 
 // =========================================================================
@@ -474,7 +465,6 @@ function updateActivations(activations, isPrompt) {
 // =========================================================================
 function startScan() {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
-
   const prompt = document.getElementById('prompt-input').value.trim();
   if (!prompt) return;
 
@@ -483,6 +473,10 @@ function startScan() {
   document.getElementById('stop-btn').disabled = false;
   document.getElementById('status-dot').className = 'status-dot generating';
   document.getElementById('stats').textContent = '';
+
+  // Reset intensities
+  nodeIntensities = {};
+  edgeIntensities = {};
 
   ws.send(JSON.stringify({
     type: 'generate',
@@ -493,14 +487,12 @@ function startScan() {
 }
 
 function stopScan() {
-  // Close and reconnect to interrupt generation
   if (ws) ws.close();
   isGenerating = false;
   document.getElementById('scan-btn').disabled = false;
   document.getElementById('stop-btn').disabled = true;
 }
 
-// Enter key to scan
 document.getElementById('prompt-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
@@ -509,9 +501,9 @@ document.getElementById('prompt-input').addEventListener('keydown', (e) => {
 });
 
 // =========================================================================
-// Visualization layout
+// Graph construction -- node-and-edge network
 // =========================================================================
-function computeLayout() {
+function buildGraph() {
   if (!modelInfo) return;
 
   const W = canvas.width / window.devicePixelRatio;
@@ -519,74 +511,345 @@ function computeLayout() {
   const nLayers = modelInfo.n_layers;
   const nHeads = modelInfo.n_heads;
 
-  // Compact layout: each layer is a narrow horizontal strip
-  // Actual transformer block flow: Input -> [LN1 -> MultiHead Attn -> +] -> [LN2 -> MLP -> +] -> Output
-  const marginTop = 45;
-  const marginBottom = 35;
+  const nodes = [];
+  const edges = [];
+
+  // Vertical layout: input at top, output at bottom
+  // Each layer has: LN1 -> Attention Heads -> Residual+ -> LN2 -> MLP -> Residual+
+  // We show each as nodes connected by edges
+
+  const marginTop = 40;
+  const marginBottom = 40;
+  const marginX = 30;
   const availH = H - marginTop - marginBottom;
+  const availW = W - marginX * 2;
 
-  // Each layer row: fixed small height, scrollable if needed
-  const maxLayerH = 32;
-  const gap = 3;
-  const layerHeight = Math.min(maxLayerH, (availH - 20) / nLayers - gap);
-  const totalHeight = nLayers * (layerHeight + gap);
+  // We have nLayers * 2 "rows" (attn row + mlp row) plus input/output
+  // But to keep it compact, each layer gets 2 sub-rows
+  const totalRows = nLayers * 2 + 2; // +2 for input embed + output logits
+  const rowSpacing = availH / (totalRows - 1);
 
-  // Center the diagram horizontally, keep it narrow
-  const diagramWidth = Math.min(W * 0.7, 500);
-  const diagramLeft = (W - diagramWidth) / 2;
+  // Node radius scales with available space
+  const baseR = Math.min(6, Math.max(3, Math.min(availW / (nHeads * 4), rowSpacing / 4)));
 
-  // Component widths within each layer row
-  // Flow: LN1 | ATTN (with heads) | + | LN2 | MLP | +
-  const compGap = 2;
-  const addW = 12; // residual add circles
-  const lnW = 24;
-  const remainW = diagramWidth - (2 * lnW) - (2 * addW) - (5 * compGap);
-  const attnW = remainW * 0.55;
-  const mlpW = remainW * 0.45;
-
-  layout = {
-    nLayers, nHeads, W, H,
-    marginTop, layerHeight, diagramWidth, diagramLeft,
-    gap, totalHeight, lnW, attnW, mlpW, addW, compGap,
-    scrollY: 0,
-    layers: [],
+  // Input embedding node
+  const inputNode = {
+    id: 'input',
+    type: 'input',
+    label: 'EMBED',
+    x: W / 2,
+    y: marginTop,
+    r: baseR + 2,
+    layer: -1,
   };
+  nodes.push(inputNode);
 
-  for (let i = 0; i < nLayers; i++) {
-    const y = marginTop + i * (layerHeight + gap);
-    let cx = diagramLeft;
+  let prevNodeIds = ['input']; // nodes from previous "row" to connect from
 
-    const ln1 = { x: cx, y: y, w: lnW, h: layerHeight };
-    cx += lnW + compGap;
+  for (let L = 0; L < nLayers; L++) {
+    const attnRowY = marginTop + (L * 2 + 1) * rowSpacing;
+    const mlpRowY = marginTop + (L * 2 + 2) * rowSpacing;
 
-    const attn = { x: cx, y: y, w: attnW, h: layerHeight, heads: [] };
-    // Individual heads as small cells inside attn
-    const headW = (attnW - 2) / nHeads;
-    for (let h = 0; h < nHeads; h++) {
-      attn.heads.push({
-        x: cx + 1 + h * headW,
-        y: y + 1,
-        w: headW - 1,
-        h: layerHeight - 2,
-      });
-    }
-    cx += attnW + compGap;
-
-    const add1 = { x: cx, y: y, w: addW, h: layerHeight };
-    cx += addW + compGap;
-
-    const ln2 = { x: cx, y: y, w: lnW, h: layerHeight };
-    cx += lnW + compGap;
-
-    const mlp = { x: cx, y: y, w: mlpW, h: layerHeight };
-    cx += mlpW + compGap;
-
-    const add2 = { x: cx, y: y, w: addW, h: layerHeight };
-
-    layout.layers.push({
-      idx: i, y,
-      ln1, attn, add1, ln2, mlp, add2,
+    // --- Attention sub-row ---
+    // LN1 node (small, left side)
+    const ln1Id = `L${L}_ln1`;
+    const ln1X = marginX + availW * 0.08;
+    nodes.push({
+      id: ln1Id, type: 'ln', label: `LN`, layer: L,
+      x: ln1X, y: attnRowY, r: baseR * 0.7,
     });
+
+    // Edges from previous row to LN1
+    for (const pid of prevNodeIds) {
+      edges.push({ from: pid, to: ln1Id, type: 'residual' });
+    }
+
+    // Attention head nodes spread across the middle
+    const headIds = [];
+    const headsStartX = marginX + availW * 0.18;
+    const headsEndX = marginX + availW * 0.78;
+    const headSpacing = nHeads > 1 ? (headsEndX - headsStartX) / (nHeads - 1) : 0;
+
+    for (let h = 0; h < nHeads; h++) {
+      const hId = `L${L}_h${h}`;
+      const hx = nHeads === 1 ? W / 2 : headsStartX + h * headSpacing;
+      nodes.push({
+        id: hId, type: 'attn', label: `H${h}`, layer: L, head: h,
+        x: hx, y: attnRowY, r: baseR,
+      });
+      headIds.push(hId);
+
+      // Edge from LN1 to each head
+      edges.push({ from: ln1Id, to: hId, type: 'forward' });
+    }
+
+    // Residual add node after attention
+    const add1Id = `L${L}_add1`;
+    const add1X = marginX + availW * 0.88;
+    nodes.push({
+      id: add1Id, type: 'residual', label: '+', layer: L,
+      x: add1X, y: attnRowY, r: baseR * 0.8,
+    });
+
+    // Edges from heads to add1
+    for (const hId of headIds) {
+      edges.push({ from: hId, to: add1Id, type: 'forward' });
+    }
+    // Skip connection to add1
+    for (const pid of prevNodeIds) {
+      edges.push({ from: pid, to: add1Id, type: 'skip' });
+    }
+
+    // --- MLP sub-row ---
+    const ln2Id = `L${L}_ln2`;
+    const ln2X = marginX + availW * 0.25;
+    nodes.push({
+      id: ln2Id, type: 'ln', label: 'LN', layer: L,
+      x: ln2X, y: mlpRowY, r: baseR * 0.7,
+    });
+    edges.push({ from: add1Id, to: ln2Id, type: 'forward' });
+
+    // MLP node (one larger node)
+    const mlpId = `L${L}_mlp`;
+    nodes.push({
+      id: mlpId, type: 'mlp', label: 'MLP', layer: L,
+      x: W / 2, y: mlpRowY, r: baseR * 1.3,
+    });
+    edges.push({ from: ln2Id, to: mlpId, type: 'forward' });
+
+    // Residual add node after MLP
+    const add2Id = `L${L}_add2`;
+    const add2X = marginX + availW * 0.75;
+    nodes.push({
+      id: add2Id, type: 'residual', label: '+', layer: L,
+      x: add2X, y: mlpRowY, r: baseR * 0.8,
+    });
+    edges.push({ from: mlpId, to: add2Id, type: 'forward' });
+    // Skip connection from add1 to add2
+    edges.push({ from: add1Id, to: add2Id, type: 'skip' });
+
+    prevNodeIds = [add2Id];
+  }
+
+  // Output logits node
+  const outputNode = {
+    id: 'output',
+    type: 'output',
+    label: 'LOGITS',
+    x: W / 2,
+    y: marginTop + (totalRows - 1) * rowSpacing,
+    r: baseR + 2,
+    layer: nLayers,
+  };
+  nodes.push(outputNode);
+  for (const pid of prevNodeIds) {
+    edges.push({ from: pid, to: outputNode.id, type: 'forward' });
+  }
+
+  // Build lookup
+  const nodeMap = {};
+  for (const n of nodes) nodeMap[n.id] = n;
+
+  // Assign edge IDs
+  for (let i = 0; i < edges.length; i++) {
+    edges[i].id = `e${i}`;
+  }
+
+  graph = { nodes, edges, nodeMap };
+
+  // Initialize intensities
+  for (const n of nodes) nodeIntensities[n.id] = 0;
+  for (const e of edges) edgeIntensities[e.id] = 0;
+}
+
+// =========================================================================
+// Animation helpers
+// =========================================================================
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+function getSpeedFactor() {
+  return parseInt(document.getElementById('speed-slider').value);
+}
+
+function getWaveDuration() {
+  const speed = getSpeedFactor();
+  return 3300 - speed * 300;
+}
+
+// =========================================================================
+// Wave processing -- propagate activations through the graph
+// =========================================================================
+function processWaves(now) {
+  if (!graph) return;
+
+  const speed = getSpeedFactor();
+  const decayRate = 0.008 + speed * 0.004;
+  const riseRate = 0.06 + speed * 0.04;
+
+  // Start next wave from queue
+  if (!activeWave && activationQueue.length > 0) {
+    const snapshot = activationQueue.shift();
+    const acts = snapshot.activations;
+
+    // Parse into per-layer targets
+    const layerTargets = {};
+    for (let i = 0; i < modelInfo.n_layers; i++) {
+      layerTargets[i] = { attn: 0, mlp: 0, ln: 0, heads: [] };
+      for (let h = 0; h < modelInfo.n_heads; h++) {
+        layerTargets[i].heads.push(0);
+      }
+    }
+
+    for (const [name, info] of Object.entries(acts)) {
+      const idx = info.layer_idx;
+      if (idx < 0 || idx >= modelInfo.n_layers) continue;
+      const mag = Math.min(1, (info.mean_magnitude || 0) / 30);
+
+      if (name.includes('attn')) {
+        layerTargets[idx].attn = Math.max(layerTargets[idx].attn, mag);
+        // Per-head data if available
+        if (info.head_data) {
+          for (let h = 0; h < info.head_data.length && h < modelInfo.n_heads; h++) {
+            layerTargets[idx].heads[h] = Math.min(1, info.head_data[h] / 20);
+          }
+        } else {
+          // Distribute with variation
+          for (let h = 0; h < modelInfo.n_heads; h++) {
+            layerTargets[idx].heads[h] = mag * (0.5 + 0.5 * Math.random());
+          }
+        }
+      } else if (name.includes('mlp')) {
+        layerTargets[idx].mlp = Math.max(layerTargets[idx].mlp, mag);
+      } else if (name.includes('ln')) {
+        layerTargets[idx].ln = Math.max(layerTargets[idx].ln, mag);
+      }
+    }
+
+    // Store raw for tooltip
+    targetActivations = {};
+    for (const [name, info] of Object.entries(acts)) {
+      targetActivations[name] = info;
+    }
+
+    const nLayers = modelInfo.n_layers;
+    const waveDur = getWaveDuration();
+    const layerDelay = waveDur / (nLayers + 4);
+
+    activeWave = {
+      startTime: now,
+      layerTargets,
+      layerDelay,
+      waveDur,
+    };
+  }
+
+  // Compute target intensities per node based on wave timing
+  const nodeTargets = {};
+  for (const n of graph.nodes) nodeTargets[n.id] = 0;
+
+  if (activeWave) {
+    const nLayers = modelInfo.n_layers;
+
+    for (let L = 0; L < nLayers; L++) {
+      const lt = activeWave.layerTargets[L];
+      const waveDelay = L * activeWave.layerDelay;
+      const elapsed = now - activeWave.startTime - waveDelay;
+
+      if (elapsed <= 0) continue;
+
+      // Each sub-component within the layer has its own stagger
+      const subDelay = activeWave.layerDelay / 6;
+      const envDur = activeWave.layerDelay * 2.5;
+
+      // LN1
+      const ln1Elapsed = elapsed;
+      if (ln1Elapsed > 0) {
+        const t = easeInOut(Math.min(1, ln1Elapsed / envDur));
+        nodeTargets[`L${L}_ln1`] = lt.ln * t;
+      }
+
+      // Attention heads
+      for (let h = 0; h < modelInfo.n_heads; h++) {
+        const hElapsed = elapsed - subDelay;
+        if (hElapsed > 0) {
+          const t = easeInOut(Math.min(1, hElapsed / envDur));
+          nodeTargets[`L${L}_h${h}`] = lt.heads[h] * t;
+        }
+      }
+
+      // Residual add 1
+      const a1Elapsed = elapsed - subDelay * 2;
+      if (a1Elapsed > 0) {
+        const t = easeInOut(Math.min(1, a1Elapsed / envDur));
+        nodeTargets[`L${L}_add1`] = Math.max(lt.attn, lt.ln) * t * 0.6;
+      }
+
+      // LN2
+      const ln2Elapsed = elapsed - subDelay * 3;
+      if (ln2Elapsed > 0) {
+        const t = easeInOut(Math.min(1, ln2Elapsed / envDur));
+        nodeTargets[`L${L}_ln2`] = lt.ln * t;
+      }
+
+      // MLP
+      const mlpElapsed = elapsed - subDelay * 4;
+      if (mlpElapsed > 0) {
+        const t = easeInOut(Math.min(1, mlpElapsed / envDur));
+        nodeTargets[`L${L}_mlp`] = lt.mlp * t;
+      }
+
+      // Residual add 2
+      const a2Elapsed = elapsed - subDelay * 5;
+      if (a2Elapsed > 0) {
+        const t = easeInOut(Math.min(1, a2Elapsed / envDur));
+        nodeTargets[`L${L}_add2`] = Math.max(lt.mlp, lt.ln) * t * 0.6;
+      }
+    }
+
+    // Input/output nodes
+    const inputElapsed = now - activeWave.startTime;
+    if (inputElapsed > 0) {
+      nodeTargets['input'] = easeInOut(Math.min(1, inputElapsed / (activeWave.layerDelay * 2))) * 0.5;
+    }
+    const outputDelay = nLayers * activeWave.layerDelay;
+    const outputElapsed = now - activeWave.startTime - outputDelay;
+    if (outputElapsed > 0) {
+      nodeTargets['output'] = easeInOut(Math.min(1, outputElapsed / (activeWave.layerDelay * 2))) * 0.5;
+    }
+
+    // Check if wave done
+    const totalWaveTime = activeWave.waveDur * 1.5;
+    if (now - activeWave.startTime > totalWaveTime) {
+      activeWave = null;
+    }
+  }
+
+  // Smooth toward targets (or decay)
+  for (const n of graph.nodes) {
+    const target = nodeTargets[n.id] || 0;
+    const cur = nodeIntensities[n.id] || 0;
+    if (target > cur) {
+      nodeIntensities[n.id] = lerp(cur, target, riseRate);
+    } else {
+      nodeIntensities[n.id] = Math.max(0, cur - decayRate);
+    }
+  }
+
+  // Edge intensities = min(source intensity, dest intensity) with some boost
+  for (const e of graph.edges) {
+    const srcI = nodeIntensities[e.from] || 0;
+    const dstI = nodeIntensities[e.to] || 0;
+    const target = Math.min(srcI, dstI) * 1.2;
+    const cur = edgeIntensities[e.id] || 0;
+    if (target > cur) {
+      edgeIntensities[e.id] = lerp(cur, target, riseRate);
+    } else {
+      edgeIntensities[e.id] = Math.max(0, cur - decayRate);
+    }
   }
 }
 
@@ -599,159 +862,42 @@ function resizeCanvas() {
   canvas.height = rect.height * window.devicePixelRatio;
   canvas.style.width = rect.width + 'px';
   canvas.style.height = rect.height + 'px';
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  if (modelInfo) computeLayout();
+  if (modelInfo) buildGraph();
 }
 
-function lerp(a, b, t) { return a + (b - a) * t; }
-
-// Smooth ease-in-out for elegant wave
-function easeInOut(t) {
-  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-}
-
-// Per-layer smoothed intensities
-let layerIntensities = []; // array of { attn, mlp, ln } per layer
-
-function getSpeedFactor() {
-  const slider = document.getElementById('speed-slider');
-  return parseInt(slider.value); // 1 (slow) to 10 (fast)
-}
-
-function getWaveDuration() {
-  // How long (ms) it takes for the wave to travel through all layers
-  const speed = getSpeedFactor();
-  // speed 1 = 3000ms, speed 10 = 300ms
-  return 3300 - speed * 300;
-}
-
-function getLayerStagger() {
-  // Delay between each layer lighting up
-  if (!layout) return 50;
-  return getWaveDuration() / (layout.nLayers + 4);
-}
-
-function intensityToColor(val, type) {
-  val = Math.min(1, Math.max(0, val));
-
+function nodeColor(intensity, type) {
+  intensity = Math.min(1, Math.max(0, intensity));
   if (type === 'attn') {
-    const r = Math.floor(lerp(50, 255, val));
-    const g = Math.floor(lerp(38, 120, val));
-    const b = Math.floor(lerp(45, 60, val));
-    return `rgb(${r},${g},${b})`;
+    return `rgba(255,${Math.floor(100 + intensity * 50)},${Math.floor(50 + intensity * 30)},${0.3 + intensity * 0.7})`;
   } else if (type === 'mlp') {
-    const r = Math.floor(lerp(35, 80, val));
-    const g = Math.floor(lerp(42, 160, val));
-    const b = Math.floor(lerp(65, 255, val));
-    return `rgb(${r},${g},${b})`;
-  } else {
-    const r = Math.floor(lerp(50, 190, val));
-    const g = Math.floor(lerp(35, 80, val));
-    const b = Math.floor(lerp(65, 255, val));
-    return `rgb(${r},${g},${b})`;
+    return `rgba(${Math.floor(60 + intensity * 30)},${Math.floor(130 + intensity * 50)},255,${0.3 + intensity * 0.7})`;
+  } else if (type === 'ln') {
+    return `rgba(${Math.floor(150 + intensity * 50)},${Math.floor(70 + intensity * 30)},255,${0.3 + intensity * 0.7})`;
+  } else if (type === 'residual') {
+    return `rgba(0,255,170,${0.2 + intensity * 0.6})`;
+  } else if (type === 'input' || type === 'output') {
+    return `rgba(0,255,170,${0.3 + intensity * 0.5})`;
   }
+  return `rgba(100,100,120,${0.3 + intensity * 0.5})`;
 }
 
-function borderColor(val, type) {
-  val = Math.min(1, Math.max(0, val));
-  if (type === 'attn') return `rgba(255,130,80,${0.25 + val * 0.6})`;
-  if (type === 'mlp') return `rgba(80,150,255,${0.25 + val * 0.6})`;
-  return `rgba(180,90,255,${0.25 + val * 0.6})`;
+function nodeBorderColor(intensity, type) {
+  intensity = Math.min(1, Math.max(0, intensity));
+  if (type === 'attn') return `rgba(255,140,80,${0.4 + intensity * 0.6})`;
+  if (type === 'mlp') return `rgba(80,180,255,${0.4 + intensity * 0.6})`;
+  if (type === 'ln') return `rgba(180,100,255,${0.4 + intensity * 0.6})`;
+  if (type === 'residual') return `rgba(0,255,170,${0.3 + intensity * 0.7})`;
+  return `rgba(0,255,170,${0.4 + intensity * 0.5})`;
 }
 
-function processWaves(now) {
-  if (!layout) return;
-
-  // Initialize layer intensities if needed
-  if (layerIntensities.length !== layout.nLayers) {
-    layerIntensities = [];
-    for (let i = 0; i < layout.nLayers; i++) {
-      layerIntensities.push({ attn: 0, mlp: 0, ln: 0 });
-    }
-  }
-
-  const stagger = getLayerStagger();
-  const speed = getSpeedFactor();
-  // Decay rate: how fast idle layers fade (slower at low speed)
-  const decayRate = 0.02 + speed * 0.008;
-  // Rise rate for smoothing toward target
-  const riseRate = 0.05 + speed * 0.03;
-
-  // Start next wave from queue if no active wave
-  if (!activeWave && activationQueue.length > 0) {
-    const snapshot = activationQueue.shift();
-    const acts = snapshot.activations;
-
-    // Parse activations into per-layer targets
-    const layerTargets = [];
-    for (let i = 0; i < layout.nLayers; i++) {
-      layerTargets.push({ attn: 0, mlp: 0, ln: 0 });
-    }
-    for (const [name, info] of Object.entries(acts)) {
-      const idx = info.layer_idx;
-      if (idx < 0 || idx >= layout.nLayers) continue;
-      const mag = Math.min(1, (info.mean_magnitude || 0) / 30);
-      if (name.includes('attn')) layerTargets[idx].attn = Math.max(layerTargets[idx].attn, mag);
-      else if (name.includes('mlp')) layerTargets[idx].mlp = Math.max(layerTargets[idx].mlp, mag);
-      else if (name.includes('ln')) layerTargets[idx].ln = Math.max(layerTargets[idx].ln, mag);
-    }
-
-    // Also store raw activations for tooltip access
-    targetActivations = {};
-    for (const [name, info] of Object.entries(acts)) {
-      targetActivations[name] = info;
-    }
-
-    activeWave = {
-      startTime: now,
-      layerTargets,
-      stagger,
-    };
-  }
-
-  // Update each layer's smoothed intensity
-  for (let i = 0; i < layout.nLayers; i++) {
-    const cur = layerIntensities[i];
-
-    if (activeWave) {
-      const waveDelay = i * activeWave.stagger;
-      const elapsed = now - activeWave.startTime - waveDelay;
-
-      if (elapsed > 0) {
-        // This layer has been reached by the wave
-        const waveDur = activeWave.stagger * 3; // each layer's activation envelope
-        const t = Math.min(1, elapsed / waveDur);
-        const envelope = easeInOut(t);
-
-        const target = activeWave.layerTargets[i];
-        cur.attn = lerp(cur.attn, target.attn * envelope, riseRate);
-        cur.mlp = lerp(cur.mlp, target.mlp * envelope, riseRate);
-        cur.ln = lerp(cur.ln, target.ln * envelope, riseRate);
-      }
-    }
-
-    // Gentle decay when no wave is hitting this layer
-    if (!activeWave) {
-      cur.attn = Math.max(0, cur.attn - decayRate);
-      cur.mlp = Math.max(0, cur.mlp - decayRate);
-      cur.ln = Math.max(0, cur.ln - decayRate);
-    }
-  }
-
-  // Check if active wave is done (all layers fully reached)
-  if (activeWave) {
-    const totalWaveTime = layout.nLayers * activeWave.stagger + activeWave.stagger * 4;
-    if (now - activeWave.startTime > totalWaveTime) {
-      // Wave complete -- set final targets
-      for (let i = 0; i < layout.nLayers; i++) {
-        const target = activeWave.layerTargets[i];
-        layerIntensities[i].attn = target.attn;
-        layerIntensities[i].mlp = target.mlp;
-        layerIntensities[i].ln = target.ln;
-      }
-      activeWave = null;
-    }
-  }
+function glowColor(type) {
+  if (type === 'attn') return '#ff8844';
+  if (type === 'mlp') return '#4499ff';
+  if (type === 'ln') return '#aa55ff';
+  if (type === 'residual') return '#00ffaa';
+  return '#00ffaa';
 }
 
 function render() {
@@ -761,166 +907,160 @@ function render() {
 
   ctx.clearRect(0, 0, W, H);
 
-  if (!layout) {
+  if (!graph) {
     ctx.fillStyle = '#555';
     ctx.font = '13px Courier New';
     ctx.textAlign = 'center';
     ctx.fillText('Waiting for model...', W / 2, H / 2);
     ctx.fillText('Press SCAN to begin', W / 2, H / 2 + 20);
-    animFrame = requestAnimationFrame(render);
+    requestAnimationFrame(render);
     return;
   }
 
   processWaves(now);
 
-  const lh = layout.layerHeight;
-  const ly0 = layout.layers[0];
+  // --- Draw edges first (behind nodes) ---
+  for (const e of graph.edges) {
+    const src = graph.nodeMap[e.from];
+    const dst = graph.nodeMap[e.to];
+    if (!src || !dst) continue;
 
-  // Title
-  ctx.fillStyle = '#555';
-  ctx.font = '10px Courier New';
-  ctx.textAlign = 'center';
-  ctx.fillText('INPUT EMBEDDINGS', W / 2, layout.marginTop - 18);
+    const intensity = edgeIntensities[e.id] || 0;
 
-  // Column headers
-  ctx.font = '8px Courier New';
-  ctx.fillStyle = '#666';
-  ctx.fillText('LN1', ly0.ln1.x + ly0.ln1.w / 2, layout.marginTop - 6);
-  ctx.fillText('ATTENTION', ly0.attn.x + ly0.attn.w / 2, layout.marginTop - 6);
-  ctx.fillText('+', ly0.add1.x + ly0.add1.w / 2, layout.marginTop - 6);
-  ctx.fillText('LN2', ly0.ln2.x + ly0.ln2.w / 2, layout.marginTop - 6);
-  ctx.fillText('MLP', ly0.mlp.x + ly0.mlp.w / 2, layout.marginTop - 6);
-  ctx.fillText('+', ly0.add2.x + ly0.add2.w / 2, layout.marginTop - 6);
+    if (e.type === 'skip') {
+      // Skip connections: curved, dashed, more subtle
+      const alpha = 0.04 + intensity * 0.35;
+      ctx.strokeStyle = `rgba(0,255,170,${alpha})`;
+      ctx.lineWidth = 0.5 + intensity * 1.5;
+      ctx.setLineDash([3, 4]);
 
-  // Draw each layer
-  for (const layer of layout.layers) {
-    const intensity = layerIntensities[layer.idx] || { attn: 0, mlp: 0, ln: 0 };
-
-    // Layer label
-    ctx.fillStyle = '#555';
-    ctx.font = '8px Courier New';
-    ctx.textAlign = 'right';
-    ctx.fillText(`L${layer.idx}`, layer.ln1.x - 4, layer.y + lh / 2 + 3);
-
-    // -- LN1 block --
-    drawBlock(layer.ln1, intensity.ln, 'ln');
-
-    // -- Attention heads with subtle per-head variation --
-    for (let h = 0; h < layer.attn.heads.length; h++) {
-      const head = layer.attn.heads[h];
-      // Stagger each head slightly within the attention block
-      const headPhase = (h / layer.attn.heads.length) * 0.3;
-      const hi = intensity.attn * (0.7 + 0.3 * Math.sin(h * 1.7 + layer.idx * 0.5 + now * 0.001));
-      ctx.fillStyle = intensityToColor(hi, 'attn');
-      ctx.fillRect(head.x, head.y, head.w, head.h);
-      ctx.strokeStyle = borderColor(hi, 'attn');
-      ctx.lineWidth = 0.5;
-      ctx.strokeRect(head.x, head.y, head.w, head.h);
-      ctx.lineWidth = 1;
-    }
-    // Outer attn border
-    ctx.strokeStyle = borderColor(intensity.attn, 'attn');
-    ctx.strokeRect(layer.attn.x, layer.attn.y, layer.attn.w, layer.attn.h);
-
-    // -- Residual add 1 --
-    drawAddCircle(layer.add1, Math.max(intensity.attn, intensity.ln));
-
-    // -- LN2 block --
-    drawBlock(layer.ln2, intensity.ln, 'ln');
-
-    // -- MLP block --
-    drawBlock(layer.mlp, intensity.mlp, 'mlp');
-
-    // -- Residual add 2 --
-    drawAddCircle(layer.add2, Math.max(intensity.mlp, intensity.ln));
-
-    // Connection lines between layers
-    if (layer.idx < layout.nLayers - 1) {
-      const next = layout.layers[layer.idx + 1];
-      const ci = Math.max(intensity.attn, intensity.mlp);
-      ctx.strokeStyle = `rgba(0,255,170,${0.08 + ci * 0.25})`;
-      ctx.lineWidth = ci > 0.1 ? 1.5 : 1;
       ctx.beginPath();
-      const midX = W / 2;
-      ctx.moveTo(midX, layer.y + lh + 1);
-      ctx.lineTo(midX, next.y - 1);
+      // Curve outward to the right
+      const cpX = Math.max(src.x, dst.x) + 30 + intensity * 10;
+      const cpY = (src.y + dst.y) / 2;
+      ctx.moveTo(src.x + src.r, src.y);
+      ctx.quadraticCurveTo(cpX, cpY, dst.x + dst.r, dst.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      // Forward connections: straight lines
+      const alpha = 0.06 + intensity * 0.5;
+      let color;
+      if (e.type === 'residual') {
+        color = `rgba(0,255,170,${alpha})`;
+      } else {
+        // Color based on destination type
+        if (dst.type === 'attn') color = `rgba(255,130,70,${alpha})`;
+        else if (dst.type === 'mlp') color = `rgba(80,160,255,${alpha})`;
+        else if (dst.type === 'ln') color = `rgba(170,90,255,${alpha})`;
+        else color = `rgba(0,255,170,${alpha})`;
+      }
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 0.4 + intensity * 2;
+
+      ctx.beginPath();
+      // Draw from edge of source circle to edge of dest circle
+      const dx = dst.x - src.x;
+      const dy = dst.y - src.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 1) continue;
+      const nx = dx / dist;
+      const ny = dy / dist;
+
+      ctx.moveTo(src.x + nx * src.r, src.y + ny * src.r);
+      ctx.lineTo(dst.x - nx * dst.r, dst.y - ny * dst.r);
+      ctx.stroke();
+
+      // Glow effect on active edges
+      if (intensity > 0.2) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = intensity * 6;
+        ctx.globalAlpha = intensity * 0.4;
+        ctx.beginPath();
+        ctx.moveTo(src.x + nx * src.r, src.y + ny * src.r);
+        ctx.lineTo(dst.x - nx * dst.r, dst.y - ny * dst.r);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+      }
+    }
+  }
+
+  ctx.lineWidth = 1;
+
+  // --- Draw nodes ---
+  for (const n of graph.nodes) {
+    const intensity = nodeIntensities[n.id] || 0;
+    const r = n.r + intensity * 2; // Slightly grow when active
+
+    // Glow
+    if (intensity > 0.15) {
+      ctx.shadowColor = glowColor(n.type);
+      ctx.shadowBlur = intensity * 12;
+    }
+
+    // Fill
+    ctx.fillStyle = nodeColor(intensity, n.type);
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Border
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = nodeBorderColor(intensity, n.type);
+    ctx.lineWidth = 0.5 + intensity * 1;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+
+    // Pulsing ring for highly active nodes
+    if (intensity > 0.5) {
+      const pulsePhase = (now * 0.003 + n.x * 0.01) % 1;
+      const pulseR = r + 2 + pulsePhase * 6;
+      const pulseAlpha = (1 - pulsePhase) * intensity * 0.3;
+      ctx.strokeStyle = `rgba(255,255,255,${pulseAlpha})`;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, pulseR, 0, Math.PI * 2);
       ctx.stroke();
       ctx.lineWidth = 1;
     }
   }
 
-  // Bottom label
-  const bottomY = layout.layers[layout.nLayers - 1].y + lh + 16;
-  ctx.fillStyle = '#555';
-  ctx.font = '10px Courier New';
-  ctx.textAlign = 'center';
-  ctx.fillText('OUTPUT LOGITS', W / 2, bottomY);
-
-  // Flow arrow on left
-  const arrowX = layout.diagramLeft - 15;
-  const topY = layout.marginTop;
-  const botY = layout.layers[layout.nLayers - 1].y + lh;
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(arrowX, topY);
-  ctx.lineTo(arrowX, botY);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(arrowX - 3, botY - 6);
-  ctx.lineTo(arrowX, botY);
-  ctx.lineTo(arrowX + 3, botY - 6);
-  ctx.stroke();
-
-  animFrame = requestAnimationFrame(render);
-}
-
-function drawBlock(rect, intensity, type) {
-  ctx.fillStyle = intensityToColor(intensity, type);
-  ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-  ctx.strokeStyle = borderColor(intensity, type);
-  ctx.lineWidth = 0.5;
-  ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
-  ctx.lineWidth = 1;
-  // Soft glow for high-intensity blocks
-  if (intensity > 0.3) {
-    const glowColor = type === 'mlp' ? '#4488ff' : type === 'attn' ? '#ff8850' : '#aa44ff';
-    ctx.shadowColor = glowColor;
-    ctx.shadowBlur = intensity * 8;
-    ctx.globalAlpha = intensity * 0.6;
-    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
+  // --- Layer labels (subtle, on the far left) ---
+  ctx.fillStyle = '#333';
+  ctx.font = '8px Courier New';
+  ctx.textAlign = 'right';
+  for (const n of graph.nodes) {
+    if (n.id.endsWith('_ln1')) {
+      ctx.fillText(`L${n.layer}`, 18, n.y + 3);
+    }
   }
-}
 
-function drawAddCircle(rect, intensity) {
-  const cx = rect.x + rect.w / 2;
-  const cy = rect.y + rect.h / 2;
-  const r = Math.min(rect.w, rect.h) / 2 - 1;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fillStyle = `rgba(0,255,170,${0.05 + intensity * 0.15})`;
-  ctx.fill();
-  ctx.strokeStyle = `rgba(0,255,170,${0.2 + intensity * 0.4})`;
-  ctx.lineWidth = 0.5;
-  ctx.stroke();
-  ctx.lineWidth = 1;
-  // + sign
-  ctx.strokeStyle = `rgba(0,255,170,${0.3 + intensity * 0.5})`;
-  ctx.beginPath();
-  ctx.moveTo(cx - 2, cy);
-  ctx.lineTo(cx + 2, cy);
-  ctx.moveTo(cx, cy - 2);
-  ctx.lineTo(cx, cy + 2);
-  ctx.stroke();
+  // Input / output labels
+  const inputN = graph.nodeMap['input'];
+  const outputN = graph.nodeMap['output'];
+  if (inputN) {
+    ctx.fillStyle = '#555';
+    ctx.font = '9px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('INPUT', inputN.x, inputN.y - inputN.r - 5);
+  }
+  if (outputN) {
+    ctx.fillStyle = '#555';
+    ctx.font = '9px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('OUTPUT', outputN.x, outputN.y + outputN.r + 12);
+  }
+
+  requestAnimationFrame(render);
 }
 
 // =========================================================================
 // Tooltip on hover
 // =========================================================================
 canvas.addEventListener('mousemove', (e) => {
-  if (!layout) return;
+  if (!graph) return;
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
@@ -928,53 +1068,62 @@ canvas.addEventListener('mousemove', (e) => {
   const tooltip = document.getElementById('tooltip');
   let found = false;
 
-  for (const layer of layout.layers) {
-    const checks = [
-      { r: layer.attn, comp: 'attn', label: 'Attention' },
-      { r: layer.mlp, comp: 'mlp', label: 'MLP' },
-      { r: layer.ln1, comp: 'ln', label: 'LayerNorm 1' },
-      { r: layer.ln2, comp: 'ln', label: 'LayerNorm 2' },
-    ];
-    for (const { r, comp, label } of checks) {
-      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
-        const info = getLayerInfo(layer.idx, comp);
-        showTooltip(e.clientX, e.clientY, `Layer ${layer.idx} ${label}`, info);
-        found = true;
-        break;
+  for (const n of graph.nodes) {
+    const dx = x - n.x;
+    const dy = y - n.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist <= n.r + 4) {
+      const intensity = nodeIntensities[n.id] || 0;
+      let title = '';
+      let details = '';
+
+      if (n.type === 'attn') {
+        title = `Layer ${n.layer} Attention Head ${n.head}`;
+      } else if (n.type === 'mlp') {
+        title = `Layer ${n.layer} MLP`;
+      } else if (n.type === 'ln') {
+        title = `Layer ${n.layer} LayerNorm`;
+      } else if (n.type === 'residual') {
+        title = `Layer ${n.layer} Residual Add`;
+      } else if (n.type === 'input') {
+        title = 'Input Embeddings';
+      } else if (n.type === 'output') {
+        title = 'Output Logits';
       }
+
+      // Find matching activation data
+      const infos = getNodeInfo(n);
+      let html = `<div class="tip-name">${title}</div>`;
+      html += `<div class="tip-val">Intensity: ${(intensity * 100).toFixed(0)}%</div>`;
+
+      if (infos.length > 0) {
+        for (const info of infos) {
+          html += `<div class="tip-val">Mag: ${info.mean_magnitude} | Max: ${info.max_activation}</div>`;
+          html += `<div class="tip-val">Sparsity: ${(info.sparsity * 100).toFixed(1)}%</div>`;
+        }
+      }
+
+      tooltip.innerHTML = html;
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top = (e.clientY - 8) + 'px';
+      found = true;
+      break;
     }
-    if (found) break;
   }
 
   if (!found) tooltip.style.display = 'none';
 });
 
-function getLayerInfo(layerIdx, component) {
-  let info = [];
+function getNodeInfo(node) {
+  const infos = [];
   for (const [name, data] of Object.entries(targetActivations)) {
-    if (data.layer_idx === layerIdx && name.includes(component)) {
-      info.push(data);
-    }
+    if (data.layer_idx !== node.layer) continue;
+    if (node.type === 'attn' && name.includes('attn')) infos.push(data);
+    else if (node.type === 'mlp' && name.includes('mlp')) infos.push(data);
+    else if (node.type === 'ln' && name.includes('ln')) infos.push(data);
   }
-  return info;
-}
-
-function showTooltip(x, y, title, infos) {
-  const tooltip = document.getElementById('tooltip');
-  let html = `<div class="tip-name">${title}</div>`;
-  if (infos.length === 0) {
-    html += '<div class="tip-val">No data</div>';
-  } else {
-    for (const info of infos) {
-      html += `<div class="tip-val">${info.name}</div>`;
-      html += `<div class="tip-val">Magnitude: ${info.mean_magnitude} | Max: ${info.max_activation}</div>`;
-      html += `<div class="tip-val">Sparsity: ${(info.sparsity * 100).toFixed(1)}% | Shape: ${info.shape}</div>`;
-    }
-  }
-  tooltip.innerHTML = html;
-  tooltip.style.display = 'block';
-  tooltip.style.left = (x + 15) + 'px';
-  tooltip.style.top = (y - 10) + 'px';
+  return infos;
 }
 
 function escapeHtml(text) {
