@@ -136,12 +136,22 @@ class ModelManager:
         print(f"Model loaded: {self.model_info}")
 
     @torch.no_grad()
-    def generate_step(self, input_ids: torch.Tensor, temperature: float = 0.8):
-        """Run one forward pass and return next token + activations."""
+    def generate_step(self, input_ids: torch.Tensor, temperature: float = 0.8, past_key_values=None):
+        """Run one forward pass and return next token + activations.
+
+        Uses KV cache when past_key_values is provided -- only the last
+        token is processed through the model, making generation ~10x faster.
+        """
         self.hook.clear()
 
-        outputs = self.model(input_ids)
+        if past_key_values is not None:
+            # Only feed the last token, reuse cached KV pairs
+            outputs = self.model(input_ids[:, -1:], past_key_values=past_key_values, use_cache=True)
+        else:
+            outputs = self.model(input_ids, use_cache=True)
+
         logits = outputs.logits[:, -1, :]
+        new_past = outputs.past_key_values
 
         # Sample next token
         if temperature > 0:
@@ -151,7 +161,7 @@ class ModelManager:
             next_token = logits.argmax(dim=-1, keepdim=True)
 
         activations = self.hook.get_activations()
-        return next_token, activations
+        return next_token, activations, new_past
 
     async def stream_generate(
         self,
@@ -160,13 +170,18 @@ class ModelManager:
         temperature: float = 0.8,
         callback=None,
     ):
-        """Generate tokens one at a time, calling callback with each token's data."""
+        """Generate tokens one at a time, calling callback with each token's data.
+
+        Uses KV caching so each step only runs the new token through the model
+        instead of reprocessing the entire sequence. Much faster on CPU.
+        """
         input_ids = self.tokenizer.encode(prompt, return_tensors="pt")
 
-        # First, send the prompt processing
+        # First, send the prompt processing (full sequence, builds initial cache)
         self.hook.clear()
         with torch.no_grad():
-            self.model(input_ids)
+            outputs = self.model(input_ids, use_cache=True)
+        past_key_values = outputs.past_key_values
         prompt_activations = self.hook.get_activations()
 
         if callback:
@@ -178,9 +193,11 @@ class ModelManager:
                 "model_info": self.model_info,
             })
 
-        # Generate tokens one by one
+        # Generate tokens one by one with KV cache
         for step in range(max_tokens):
-            next_token, activations = self.generate_step(input_ids, temperature)
+            next_token, activations, past_key_values = self.generate_step(
+                input_ids, temperature, past_key_values=past_key_values
+            )
             input_ids = torch.cat([input_ids, next_token], dim=1)
 
             token_text = self.tokenizer.decode(next_token[0])
@@ -189,7 +206,7 @@ class ModelManager:
             if callback:
                 await callback({
                     "type": "token_generated",
-                    "step": step,
+                    "step": step + 1,
                     "token": token_text,
                     "token_id": token_id,
                     "activations": activations,
@@ -200,7 +217,7 @@ class ModelManager:
                 break
 
             # Small yield to allow WebSocket messages to flush
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.005)
 
         if callback:
             full_text = self.tokenizer.decode(input_ids[0])
