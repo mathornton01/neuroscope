@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "neuroscope"
@@ -28,11 +28,11 @@ dependencies = [
     "torch>=2.0",
     "numpy>=1.24",
     "transformers>=4.35",
-    "transformer-lens>=1.0",
     "einops>=0.7",
 ]
 
 [project.optional-dependencies]
+lens = ["transformer-lens>=1.0"]
 viz = [
     "fastapi>=0.100",
     "uvicorn>=0.23",
@@ -45,7 +45,7 @@ dev = [
     "ruff>=0.1",
     "mypy>=1.5",
 ]
-all = ["neuroscope[viz,dev]"]
+all = ["neuroscope[viz,dev,lens]"]
 
 [project.urls]
 Homepage = "https://github.com/mathornton01/neuroscope"
