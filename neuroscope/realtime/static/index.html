@@ -8,55 +8,57 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    background: #0a0a10;
+    background: #08080e;
     color: #e0e0e0;
     font-family: 'Courier New', monospace;
     overflow: hidden;
+    height: 100vh;
   }
 
   .header {
     text-align: center;
-    padding: 12px;
+    padding: 10px;
     border-bottom: 1px solid #1a1a2e;
   }
   .header h1 {
-    font-size: 20px;
+    font-size: 18px;
     color: #00ffaa;
     letter-spacing: 3px;
   }
   .header .subtitle {
-    font-size: 11px;
+    font-size: 10px;
     color: #555;
     margin-top: 2px;
   }
 
   .main-container {
     display: flex;
-    height: calc(100vh - 70px);
+    height: calc(100vh - 65px);
   }
 
+  /* --- Left panel: controls + output --- */
   .left-panel {
-    width: 320px;
+    width: 300px;
     border-right: 1px solid #1a1a2e;
     display: flex;
     flex-direction: column;
-    padding: 12px;
+    padding: 10px;
     flex-shrink: 0;
   }
 
-  .prompt-section { margin-bottom: 10px; }
+  .prompt-section { margin-bottom: 8px; }
   .prompt-section label {
     display: block;
-    font-size: 10px;
+    font-size: 9px;
     color: #00ffaa;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
   .prompt-section textarea {
     width: 100%;
-    height: 60px;
-    background: #111;
+    height: 50px;
+    background: #0e0e18;
     border: 1px solid #2a2a3e;
     color: #e0e0e0;
     font-family: 'Courier New', monospace;
@@ -73,17 +75,17 @@
   .controls {
     display: flex;
     gap: 6px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   .controls button {
     flex: 1;
-    padding: 7px;
+    padding: 6px;
     background: #00ffaa;
     color: #0a0a0f;
     border: none;
     font-family: 'Courier New', monospace;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 11px;
     cursor: pointer;
     border-radius: 4px;
     letter-spacing: 1px;
@@ -103,17 +105,17 @@
   .param-row {
     display: flex;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   .param-row label {
     font-size: 9px;
-    color: #888;
+    color: #666;
     display: block;
     margin-bottom: 2px;
   }
   .param-row input {
-    width: 70px;
-    background: #111;
+    width: 65px;
+    background: #0e0e18;
     border: 1px solid #2a2a3e;
     color: #e0e0e0;
     padding: 3px 5px;
@@ -122,11 +124,11 @@
     border-radius: 3px;
   }
 
-  .speed-slider-section { margin-bottom: 10px; }
-  .speed-slider-section label {
+  .speed-section { margin-bottom: 8px; }
+  .speed-section label {
     display: block;
     font-size: 9px;
-    color: #888;
+    color: #666;
     margin-bottom: 2px;
   }
   .slider-row {
@@ -136,8 +138,8 @@
   }
   .slider-label {
     font-size: 8px;
-    color: #555;
-    min-width: 24px;
+    color: #444;
+    min-width: 20px;
   }
   .slider-row input[type="range"] {
     flex: 1;
@@ -151,8 +153,8 @@
   .slider-row input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: #00ffaa;
     cursor: pointer;
@@ -161,26 +163,27 @@
   .output-section {
     flex: 1;
     overflow-y: auto;
+    margin-top: 4px;
   }
   .output-section .label {
-    font-size: 10px;
+    font-size: 9px;
     color: #00ffaa;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
   .output-text {
-    background: #111;
+    background: #0e0e18;
     border: 1px solid #2a2a3e;
     padding: 8px;
     font-size: 12px;
     line-height: 1.5;
-    min-height: 80px;
+    min-height: 60px;
     border-radius: 4px;
     white-space: pre-wrap;
     word-wrap: break-word;
   }
-  .output-text .prompt-part { color: #888; }
+  .output-text .prompt-part { color: #666; }
   .output-text .generated-part { color: #00ffaa; }
   .output-text .cursor {
     display: inline-block;
@@ -193,50 +196,165 @@
   @keyframes blink { from { opacity: 1; } to { opacity: 0.2; } }
 
   .stats {
-    margin-top: 6px;
-    font-size: 10px;
-    color: #666;
+    margin-top: 4px;
+    font-size: 9px;
+    color: #555;
   }
 
-  .right-panel {
+  /* --- Center: logit lens tower --- */
+  .center-panel {
     flex: 1;
     position: relative;
     overflow: hidden;
+    min-width: 0;
   }
 
-  #brain-canvas {
+  #lens-canvas {
     width: 100%;
     height: 100%;
   }
 
-  .tooltip {
-    display: none;
-    position: absolute;
-    background: rgba(15,15,25,0.95);
-    border: 1px solid #00ffaa;
-    padding: 8px 12px;
-    font-size: 10px;
-    border-radius: 4px;
-    pointer-events: none;
-    z-index: 100;
-    max-width: 240px;
+  /* --- Right panel: token evolution detail --- */
+  .right-panel {
+    width: 260px;
+    border-left: 1px solid #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    flex-shrink: 0;
+    overflow-y: auto;
   }
-  .tooltip .tip-name { color: #00ffaa; font-weight: bold; }
-  .tooltip .tip-val { color: #ccc; margin-top: 2px; }
+
+  .right-panel .panel-title {
+    font-size: 9px;
+    color: #00ffaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .final-prediction {
+    margin-bottom: 12px;
+  }
+  .final-prediction .final-label {
+    font-size: 9px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .final-prediction .final-token {
+    font-size: 22px;
+    color: #00ffaa;
+    font-weight: bold;
+    min-height: 32px;
+  }
+  .final-prediction .final-prob {
+    font-size: 10px;
+    color: #555;
+  }
+
+  .top-k-list {
+    margin-bottom: 12px;
+  }
+  .top-k-list .tk-title {
+    font-size: 9px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .tk-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+    font-size: 11px;
+  }
+  .tk-bar-wrap {
+    flex: 1;
+    height: 14px;
+    background: #111;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .tk-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+  .tk-bar-label {
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    font-size: 9px;
+    color: #ddd;
+    text-shadow: 0 0 3px #000;
+    white-space: nowrap;
+  }
+  .tk-prob {
+    font-size: 9px;
+    color: #555;
+    min-width: 35px;
+    text-align: right;
+  }
+
+  .evolution-section {
+    flex: 1;
+    overflow-y: auto;
+  }
+  .evolution-section .evo-title {
+    font-size: 9px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .evo-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+    font-size: 10px;
+    border-bottom: 1px solid #111;
+  }
+  .evo-layer {
+    color: #444;
+    min-width: 22px;
+    font-size: 9px;
+  }
+  .evo-token {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .evo-conf {
+    min-width: 30px;
+    text-align: right;
+    font-size: 9px;
+  }
+  .evo-bar {
+    width: 40px;
+    height: 6px;
+    background: #111;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .evo-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
 
   .status-bar {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 22px;
-    background: #0a0a10;
+    height: 20px;
+    background: #08080e;
     border-top: 1px solid #1a1a2e;
     display: flex;
     align-items: center;
     padding: 0 12px;
     font-size: 9px;
-    color: #666;
+    color: #555;
     gap: 15px;
   }
   .status-dot {
@@ -248,44 +366,23 @@
   }
   .status-dot.connected { background: #00ffaa; }
   .status-dot.disconnected { background: #ff4444; }
-  .status-dot.generating { background: #ffaa00; animation: pulse 0.5s infinite alternate; }
-  @keyframes pulse { from { opacity: 1; } to { opacity: 0.3; } }
-
-  .legend {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background: rgba(10,10,15,0.9);
-    border: 1px solid #1a1a2e;
-    padding: 8px;
-    border-radius: 4px;
-    font-size: 9px;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-bottom: 3px;
-  }
-  .legend-swatch {
-    width: 8px;
-    height: 8px;
-    border-radius: 2px;
-  }
+  .status-dot.generating { background: #ffaa00; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>NEUROSCOPE</h1>
-  <div class="subtitle">Real-Time Neural Pathway Visualization</div>
+  <div class="subtitle">Logit Lens -- Watch Predictions Evolve Through Each Layer</div>
 </div>
 
 <div class="main-container">
+
+  <!-- Left: controls + output -->
   <div class="left-panel">
     <div class="prompt-section">
       <label>Prompt</label>
-      <textarea id="prompt-input" placeholder="Enter a prompt to scan...">The meaning of life is</textarea>
+      <textarea id="prompt-input" placeholder="Enter a prompt...">The meaning of life is</textarea>
     </div>
 
     <div class="param-row">
@@ -299,12 +396,12 @@
       </div>
     </div>
 
-    <div class="speed-slider-section">
-      <label>Transition Speed</label>
+    <div class="speed-section">
+      <label>Animation Speed</label>
       <div class="slider-row">
-        <span class="slider-label">Smooth</span>
+        <span class="slider-label">Slow</span>
         <input type="range" id="speed-slider" min="1" max="10" value="5" step="1">
-        <span class="slider-label">Snappy</span>
+        <span class="slider-label">Fast</span>
       </div>
     </div>
 
@@ -314,7 +411,7 @@
     </div>
 
     <div class="output-section">
-      <div class="label">Output Stream</div>
+      <div class="label">Output</div>
       <div id="output-text" class="output-text">
         <span class="prompt-part">Waiting for scan...</span>
       </div>
@@ -322,32 +419,32 @@
     </div>
   </div>
 
-  <div class="right-panel">
-    <canvas id="brain-canvas"></canvas>
-    <div class="legend">
-      <div class="legend-item">
-        <div class="legend-swatch" style="background: #ff7744;"></div>
-        <span>Attention</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-swatch" style="background: #4499ff;"></div>
-        <span>MLP / FFN</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-swatch" style="background: #aa55ff;"></div>
-        <span>LayerNorm</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-swatch" style="background: #00ddaa;"></div>
-        <span>Residual Add</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-swatch" style="background: #555; border: 1px dashed #888;"></div>
-        <span>Skip connection</span>
-      </div>
-    </div>
-    <div id="tooltip" class="tooltip"></div>
+  <!-- Center: logit lens visualization -->
+  <div class="center-panel">
+    <canvas id="lens-canvas"></canvas>
   </div>
+
+  <!-- Right: token predictions detail -->
+  <div class="right-panel">
+    <div class="panel-title">Current Prediction</div>
+
+    <div class="final-prediction">
+      <div class="final-label">Selected token:</div>
+      <div id="final-token" class="final-token">--</div>
+      <div id="final-prob" class="final-prob"></div>
+    </div>
+
+    <div class="top-k-list">
+      <div class="tk-title">Top 5 candidates (final output):</div>
+      <div id="top-k-container"></div>
+    </div>
+
+    <div class="evolution-section">
+      <div class="evo-title">Prediction at each layer:</div>
+      <div id="evolution-container"></div>
+    </div>
+  </div>
+
 </div>
 
 <div class="status-bar">
@@ -367,20 +464,21 @@ let modelInfo = null;
 let tokenCount = 0;
 let startTime = 0;
 
-// Activation data
-let targetActivations = {};
-let activationQueue = [];
+// Layer prediction data (the core visualization data)
+let currentLayerPredictions = [];  // [{layer, top_k, confidence, entropy}, ...]
+let currentFinalPredictions = [];  // top-5 from actual output
+let currentSelectedToken = '';
+let previousLayerPredictions = []; // for smooth transitions
 
-// Canvas
-const canvas = document.getElementById('brain-canvas');
+// For the center canvas animation
+let animationState = {
+  layerSlots: [],       // rendered state of each layer row
+  particles: [],        // flowing particles
+  tokenHistory: [],     // last N token steps for trail visualization
+};
+
+const canvas = document.getElementById('lens-canvas');
 const ctx = canvas.getContext('2d');
-
-// Diagram layout -- blocks and connections
-let diagram = null;
-
-// Smoothed intensities per block
-let blockIntensities = {};
-let connIntensities = {};
 
 // =========================================================================
 // WebSocket
@@ -393,17 +491,12 @@ function connect() {
     document.getElementById('status-dot').className = 'status-dot connected';
     document.getElementById('status-text').textContent = 'Connected';
   };
-
   ws.onclose = () => {
     document.getElementById('status-dot').className = 'status-dot disconnected';
     document.getElementById('status-text').textContent = 'Disconnected';
     setTimeout(connect, 2000);
   };
-
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    handleMessage(data);
-  };
+  ws.onmessage = (event) => handleMessage(JSON.parse(event.data));
 }
 
 function handleMessage(data) {
@@ -412,13 +505,14 @@ function handleMessage(data) {
       modelInfo = data.model_info;
       document.getElementById('model-info').textContent =
         `${modelInfo.name} | ${modelInfo.n_layers}L x ${modelInfo.n_heads}H | d=${modelInfo.d_model}`;
-      buildDiagram();
-      queueActivations(data.activations);
       tokenCount = data.n_tokens;
       startTime = performance.now();
 
       document.getElementById('output-text').innerHTML =
         `<span class="prompt-part">${escapeHtml(data.prompt)}</span><span class="generated-part"></span><span class="cursor"></span>`;
+
+      updatePredictions(data.layer_predictions, data.final_predictions, '');
+      initAnimation();
       break;
 
     case 'token_generated':
@@ -431,7 +525,8 @@ function handleMessage(data) {
       const genSpan = document.querySelector('.generated-part');
       if (genSpan) genSpan.textContent += data.token;
 
-      queueActivations(data.activations);
+      currentSelectedToken = data.token;
+      updatePredictions(data.layer_predictions, data.final_predictions, data.token);
       break;
 
     case 'generation_complete':
@@ -441,7 +536,6 @@ function handleMessage(data) {
       document.getElementById('status-dot').className = 'status-dot connected';
       const cursor = document.querySelector('.cursor');
       if (cursor) cursor.remove();
-
       const finalElapsed = (performance.now() - startTime) / 1000;
       document.getElementById('stats').textContent =
         `Complete: ${data.total_tokens} tokens in ${finalElapsed.toFixed(1)}s`;
@@ -455,8 +549,115 @@ function handleMessage(data) {
   }
 }
 
-function queueActivations(activations) {
-  activationQueue.push({ activations, queuedAt: performance.now() });
+// =========================================================================
+// Update predictions from server data
+// =========================================================================
+function updatePredictions(layerPreds, finalPreds, selectedToken) {
+  previousLayerPredictions = currentLayerPredictions;
+  currentLayerPredictions = layerPreds || [];
+  currentFinalPredictions = finalPreds || [];
+
+  // Save to history for trail effect
+  if (currentLayerPredictions.length > 0) {
+    animationState.tokenHistory.push({
+      predictions: currentLayerPredictions,
+      finalToken: selectedToken,
+      timestamp: performance.now(),
+    });
+    // Keep last 8 steps
+    if (animationState.tokenHistory.length > 8) {
+      animationState.tokenHistory.shift();
+    }
+  }
+
+  // Update right panel
+  updateRightPanel(selectedToken);
+}
+
+function updateRightPanel(selectedToken) {
+  // Final selected token
+  const ftEl = document.getElementById('final-token');
+  const fpEl = document.getElementById('final-prob');
+  if (selectedToken) {
+    ftEl.textContent = JSON.stringify(selectedToken);
+  }
+
+  // Top-k bar chart
+  const tkContainer = document.getElementById('top-k-container');
+  tkContainer.innerHTML = '';
+  const colors = ['#00ffaa', '#00ccff', '#ff7744', '#aa55ff', '#ffaa00'];
+
+  for (let i = 0; i < currentFinalPredictions.length; i++) {
+    const pred = currentFinalPredictions[i];
+    const pct = (pred.prob * 100);
+
+    const item = document.createElement('div');
+    item.className = 'tk-item';
+
+    const barWrap = document.createElement('div');
+    barWrap.className = 'tk-bar-wrap';
+
+    const bar = document.createElement('div');
+    bar.className = 'tk-bar';
+    bar.style.width = pct + '%';
+    bar.style.background = colors[i];
+    bar.style.opacity = '0.7';
+
+    const label = document.createElement('div');
+    label.className = 'tk-bar-label';
+    label.textContent = JSON.stringify(pred.token);
+
+    barWrap.appendChild(bar);
+    barWrap.appendChild(label);
+
+    const prob = document.createElement('div');
+    prob.className = 'tk-prob';
+    prob.textContent = (pct).toFixed(1) + '%';
+
+    item.appendChild(barWrap);
+    item.appendChild(prob);
+    tkContainer.appendChild(item);
+  }
+
+  // Evolution list (prediction at each layer)
+  const evoContainer = document.getElementById('evolution-container');
+  evoContainer.innerHTML = '';
+
+  for (const lp of currentLayerPredictions) {
+    const item = document.createElement('div');
+    item.className = 'evo-item';
+
+    const layerLabel = document.createElement('div');
+    layerLabel.className = 'evo-layer';
+    layerLabel.textContent = 'L' + lp.layer;
+
+    const tokenLabel = document.createElement('div');
+    tokenLabel.className = 'evo-token';
+    const topToken = lp.top_k[0];
+    // Color based on whether this layer's prediction matches the final output
+    const matchesFinal = currentFinalPredictions.length > 0 &&
+      topToken.token_id === currentFinalPredictions[0].token_id;
+    tokenLabel.style.color = matchesFinal ? '#00ffaa' : '#ff7744';
+    tokenLabel.textContent = JSON.stringify(topToken.token);
+
+    const confLabel = document.createElement('div');
+    confLabel.className = 'evo-conf';
+    confLabel.textContent = (lp.confidence * 100).toFixed(0) + '%';
+
+    const bar = document.createElement('div');
+    bar.className = 'evo-bar';
+    const fill = document.createElement('div');
+    fill.className = 'evo-bar-fill';
+    fill.style.width = (lp.confidence * 100) + '%';
+    fill.style.background = matchesFinal ? '#00ffaa' : '#ff7744';
+    bar.appendChild(fill);
+
+    item.appendChild(layerLabel);
+    item.appendChild(tokenLabel);
+    item.appendChild(confLabel);
+    item.appendChild(bar);
+    evoContainer.appendChild(item);
+  }
 }
 
 // =========================================================================
@@ -473,8 +674,8 @@ function startScan() {
   document.getElementById('status-dot').className = 'status-dot generating';
   document.getElementById('stats').textContent = '';
 
-  blockIntensities = {};
-  connIntensities = {};
+  animationState.tokenHistory = [];
+  animationState.particles = [];
 
   ws.send(JSON.stringify({
     type: 'generate',
@@ -499,267 +700,24 @@ document.getElementById('prompt-input').addEventListener('keydown', (e) => {
 });
 
 // =========================================================================
-// Diagram construction -- accurate GPT-2 pre-norm transformer
+// Canvas animation -- Logit Lens Tower
 // =========================================================================
-// GPT-2 architecture per layer (pre-LN variant):
-//   x ─────────────────────────────┐
-//   │                              │ (residual)
-//   ├─> LN1 ─> Multi-Head Attn ───┤
-//   │                              + (add)
-//   x ─────────────────────────────┐
-//   │                              │ (residual)
-//   ├─> LN2 ─> MLP (FFN) ─────────┤
-//   │                              + (add)
-//   x (to next layer)
-
-function buildDiagram() {
+function initAnimation() {
+  animationState.layerSlots = [];
   if (!modelInfo) return;
-
-  const W = canvas.width / window.devicePixelRatio;
-  const H = canvas.height / window.devicePixelRatio;
-  const nLayers = modelInfo.n_layers;
-  const nHeads = modelInfo.n_heads;
-
-  const blocks = [];   // rectangles
-  const conns = [];     // connections (lines/arrows)
-
-  // Layout constants
-  const marginTop = 30;
-  const marginBottom = 30;
-  const availH = H - marginTop - marginBottom;
-
-  // Main trunk is slightly left of center to leave room for skip connections on the right
-  const trunkX = W * 0.42;
-
-  // Block dimensions -- compact
-  const layerH = availH / (nLayers + 1.5);
-  const compH = Math.min(12, layerH / 7);
-  const compGap = Math.max(1, (layerH - compH * 6) / 7);
-  const mainW = Math.min(120, W * 0.2);    // LN, MLP width
-  const attnW = Math.min(160, W * 0.26);   // attention block (wider, has heads)
-  const addW = Math.min(60, W * 0.1);      // add blocks -- wider so they're visible as merge points
-  const headW = Math.max(5, (attnW - 4) / nHeads - 1);
-
-  // Residual bypass offset (how far right the skip line runs)
-  const skipOffsetX = Math.min(110, W * 0.16);
-
-  // Input block
-  const inputY = marginTop;
-  blocks.push({
-    id: 'input', type: 'input', label: 'Embed + Pos',
-    x: trunkX - mainW/2, y: inputY, w: mainW, h: compH + 2, layer: -1,
-  });
-
-  let curY = inputY + compH + 2 + compGap * 2;
-
-  for (let L = 0; L < nLayers; L++) {
-    // LN1
-    const ln1Id = `L${L}_ln1`;
-    blocks.push({
-      id: ln1Id, type: 'ln', label: 'LN1',
-      x: trunkX - mainW/2, y: curY, w: mainW, h: compH, layer: L,
+  for (let i = 0; i < modelInfo.n_layers; i++) {
+    animationState.layerSlots.push({
+      layer: i,
+      currentToken: '',
+      currentConf: 0,
+      targetToken: '',
+      targetConf: 0,
+      matchesFinal: false,
+      transitionProgress: 1,
     });
-    curY += compH + compGap;
-
-    // Multi-Head Attention (contains sub-heads)
-    const attnId = `L${L}_attn`;
-    const attnH = compH + 4;
-    blocks.push({
-      id: attnId, type: 'attn', label: `Attn (${nHeads}h)`,
-      x: trunkX - attnW/2, y: curY, w: attnW, h: attnH, layer: L,
-      nHeads: nHeads, headW: headW,
-    });
-    for (let h = 0; h < nHeads; h++) {
-      blocks.push({
-        id: `L${L}_h${h}`, type: 'head', label: `H${h}`,
-        x: trunkX - attnW/2 + 2 + h * (headW + 1),
-        y: curY + 2, w: headW, h: attnH - 4,
-        layer: L, head: h, parentId: attnId,
-      });
-    }
-    curY += attnH + compGap;
-
-    // Residual Add 1 -- x + Attn(LN1(x))
-    const add1Id = `L${L}_add1`;
-    blocks.push({
-      id: add1Id, type: 'add', label: '+ add',
-      x: trunkX - addW/2, y: curY, w: addW, h: compH, layer: L,
-    });
-    curY += compH + compGap;
-
-    // LN2
-    const ln2Id = `L${L}_ln2`;
-    blocks.push({
-      id: ln2Id, type: 'ln', label: 'LN2',
-      x: trunkX - mainW/2, y: curY, w: mainW, h: compH, layer: L,
-    });
-    curY += compH + compGap;
-
-    // MLP / FFN
-    const mlpId = `L${L}_mlp`;
-    blocks.push({
-      id: mlpId, type: 'mlp', label: 'MLP',
-      x: trunkX - mainW/2, y: curY, w: mainW, h: compH + 2, layer: L,
-    });
-    curY += compH + 2 + compGap;
-
-    // Residual Add 2 -- x + MLP(LN2(x))
-    const add2Id = `L${L}_add2`;
-    blocks.push({
-      id: add2Id, type: 'add', label: '+ add',
-      x: trunkX - addW/2, y: curY, w: addW, h: compH, layer: L,
-    });
-    curY += compH + compGap * 2;
-
-    // --- Connections within this layer ---
-    const prevId = L === 0 ? 'input' : `L${L-1}_add2`;
-
-    // Main forward path: prev -> LN1 -> Attn -> Add1 -> LN2 -> MLP -> Add2
-    conns.push({ id: `c_${prevId}_${ln1Id}`, from: prevId, to: ln1Id, type: 'trunk' });
-    conns.push({ id: `c_${ln1Id}_${attnId}`, from: ln1Id, to: attnId, type: 'forward' });
-    conns.push({ id: `c_${attnId}_${add1Id}`, from: attnId, to: add1Id, type: 'forward' });
-    conns.push({ id: `c_${add1Id}_${ln2Id}`, from: add1Id, to: ln2Id, type: 'trunk' });
-    conns.push({ id: `c_${ln2Id}_${mlpId}`, from: ln2Id, to: mlpId, type: 'forward' });
-    conns.push({ id: `c_${mlpId}_${add2Id}`, from: mlpId, to: add2Id, type: 'forward' });
-
-    // Residual skip 1: prev -> Add1 (bypasses LN1 + Attention)
-    conns.push({ id: `c_skip1_L${L}`, from: prevId, to: add1Id, type: 'skip', skipX: trunkX + skipOffsetX });
-
-    // Residual skip 2: Add1 -> Add2 (bypasses LN2 + MLP)
-    conns.push({ id: `c_skip2_L${L}`, from: add1Id, to: add2Id, type: 'skip', skipX: trunkX + skipOffsetX + 12 });
-  }
-
-  // Final LayerNorm (GPT-2 has a final LN after all layers)
-  const finalLnId = 'final_ln';
-  blocks.push({
-    id: finalLnId, type: 'ln', label: 'Final LN',
-    x: trunkX - mainW/2, y: curY, w: mainW, h: compH, layer: modelInfo.n_layers,
-  });
-  const lastAdd = `L${nLayers-1}_add2`;
-  conns.push({ id: `c_${lastAdd}_finalln`, from: lastAdd, to: finalLnId, type: 'trunk' });
-  curY += compH + compGap;
-
-  // Output block
-  const outputId = 'output';
-  blocks.push({
-    id: outputId, type: 'output', label: 'Logits',
-    x: trunkX - mainW/2, y: curY, w: mainW, h: compH + 2, layer: modelInfo.n_layers,
-  });
-  conns.push({ id: `c_finalln_output`, from: finalLnId, to: outputId, type: 'trunk' });
-
-  // Build lookup
-  const blockMap = {};
-  for (const b of blocks) blockMap[b.id] = b;
-
-  diagram = { blocks, conns, blockMap };
-
-  // Init intensities
-  for (const b of blocks) {
-    blockIntensities[b.id] = 0;
-    blockTargetIntensities[b.id] = 0;
-  }
-  for (const c of conns) connIntensities[c.id] = 0;
-}
-
-// =========================================================================
-// Animation -- no pulsing, just smooth transitions to current activation state
-// =========================================================================
-function lerp(a, b, t) { return a + (b - a) * t; }
-
-// Current target intensities per block (set directly from activation data)
-let blockTargetIntensities = {};
-
-function getSpeedFactor() {
-  return parseInt(document.getElementById('speed-slider').value);
-}
-
-// =========================================================================
-// Process activations -- direct mapping, no waves or envelopes
-// =========================================================================
-function processActivations(now) {
-  if (!diagram) return;
-
-  // Speed controls how fast we lerp toward target (transition smoothness)
-  const speed = getSpeedFactor();
-  const lerpRate = 0.02 + speed * 0.02; // 0.04 at speed=1, 0.22 at speed=10
-
-  // Process any queued activation snapshots -- just use the latest one
-  while (activationQueue.length > 0) {
-    const snapshot = activationQueue.shift();
-    const acts = snapshot.activations;
-
-    // Reset targets
-    for (const b of diagram.blocks) blockTargetIntensities[b.id] = 0;
-
-    // Map activations directly to block targets
-    for (const [name, info] of Object.entries(acts)) {
-      const idx = info.layer_idx;
-      if (idx < 0 || idx >= modelInfo.n_layers) continue;
-      const mag = Math.min(1, (info.mean_magnitude || 0) / 30);
-
-      if (name.includes('attn')) {
-        blockTargetIntensities[`L${idx}_attn`] = Math.max(blockTargetIntensities[`L${idx}_attn`] || 0, mag);
-        // Per-head
-        if (info.head_data) {
-          for (let h = 0; h < info.head_data.length && h < modelInfo.n_heads; h++) {
-            blockTargetIntensities[`L${idx}_h${h}`] = Math.min(1, info.head_data[h] / 20);
-          }
-        } else {
-          for (let h = 0; h < modelInfo.n_heads; h++) {
-            blockTargetIntensities[`L${idx}_h${h}`] = mag * (0.5 + 0.5 * Math.random());
-          }
-        }
-        // LN1 fires proportionally with attention
-        blockTargetIntensities[`L${idx}_ln1`] = Math.max(blockTargetIntensities[`L${idx}_ln1`] || 0, mag * 0.6);
-        // Add1 is sum node
-        blockTargetIntensities[`L${idx}_add1`] = Math.max(blockTargetIntensities[`L${idx}_add1`] || 0, mag * 0.5);
-      } else if (name.includes('mlp')) {
-        blockTargetIntensities[`L${idx}_mlp`] = Math.max(blockTargetIntensities[`L${idx}_mlp`] || 0, mag);
-        // LN2 fires proportionally with MLP
-        blockTargetIntensities[`L${idx}_ln2`] = Math.max(blockTargetIntensities[`L${idx}_ln2`] || 0, mag * 0.6);
-        // Add2 is sum node
-        blockTargetIntensities[`L${idx}_add2`] = Math.max(blockTargetIntensities[`L${idx}_add2`] || 0, mag * 0.5);
-      } else if (name.includes('ln')) {
-        // Direct LN activation
-        if (name.includes('ln_1') || name.includes('ln1')) {
-          blockTargetIntensities[`L${idx}_ln1`] = Math.max(blockTargetIntensities[`L${idx}_ln1`] || 0, mag);
-        } else {
-          blockTargetIntensities[`L${idx}_ln2`] = Math.max(blockTargetIntensities[`L${idx}_ln2`] || 0, mag);
-        }
-      }
-    }
-
-    // Input/output get moderate constant activation during generation
-    blockTargetIntensities['input'] = 0.3;
-    blockTargetIntensities['output'] = 0.3;
-
-    // Store for tooltips
-    targetActivations = {};
-    for (const [name, info] of Object.entries(acts)) {
-      targetActivations[name] = info;
-    }
-  }
-
-  // Smooth lerp toward target values -- no pulsing, just smooth transitions
-  for (const b of diagram.blocks) {
-    const target = blockTargetIntensities[b.id] || 0;
-    const cur = blockIntensities[b.id] || 0;
-    blockIntensities[b.id] = lerp(cur, target, lerpRate);
-  }
-
-  // Connection intensities: average of source and dest block
-  for (const c of diagram.conns) {
-    const srcI = blockIntensities[c.from] || 0;
-    const dstI = blockIntensities[c.to] || 0;
-    const target = (srcI + dstI) / 2;
-    const cur = connIntensities[c.id] || 0;
-    connIntensities[c.id] = lerp(cur, target, lerpRate);
   }
 }
 
-// =========================================================================
-// Rendering
-// =========================================================================
 function resizeCanvas() {
   const rect = canvas.parentElement.getBoundingClientRect();
   canvas.width = rect.width * window.devicePixelRatio;
@@ -768,180 +726,278 @@ function resizeCanvas() {
   canvas.style.height = rect.height + 'px';
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  if (modelInfo) buildDiagram();
 }
 
-// Color helpers
-const typeColors = {
-  attn:   { r: 255, g: 119, b: 68 },   // orange
-  head:   { r: 255, g: 119, b: 68 },
-  mlp:    { r: 68,  g: 153, b: 255 },   // blue
-  ln:     { r: 170, g: 85,  b: 255 },   // purple
-  add:    { r: 0,   g: 221, b: 170 },   // teal
-  input:  { r: 0,   g: 200, b: 150 },
-  output: { r: 0,   g: 200, b: 150 },
-};
+function lerp(a, b, t) { return a + (b - a) * Math.min(1, Math.max(0, t)); }
 
-function blockFill(type, intensity) {
-  const c = typeColors[type] || { r: 100, g: 100, b: 120 };
-  // Idle: very dim. Active: brighter.
-  const alpha = 0.08 + intensity * 0.55;
-  return `rgba(${c.r},${c.g},${c.b},${alpha})`;
-}
-
-function blockBorder(type, intensity) {
-  const c = typeColors[type] || { r: 100, g: 100, b: 120 };
-  const alpha = 0.25 + intensity * 0.65;
-  return `rgba(${c.r},${c.g},${c.b},${alpha})`;
+function getSpeedFactor() {
+  return parseInt(document.getElementById('speed-slider').value);
 }
 
 function render() {
   const now = performance.now();
   const W = canvas.width / window.devicePixelRatio;
   const H = canvas.height / window.devicePixelRatio;
+  const speed = getSpeedFactor();
 
   ctx.clearRect(0, 0, W, H);
 
-  if (!diagram) {
-    ctx.fillStyle = '#555';
+  if (!modelInfo || currentLayerPredictions.length === 0) {
+    ctx.fillStyle = '#444';
     ctx.font = '13px Courier New';
     ctx.textAlign = 'center';
-    ctx.fillText('Waiting for model...', W / 2, H / 2);
-    ctx.fillText('Press SCAN to begin', W / 2, H / 2 + 20);
+    ctx.fillText('Press SCAN to begin', W / 2, H / 2);
+    ctx.fillStyle = '#333';
+    ctx.font = '11px Courier New';
+    ctx.fillText('Watch predictions evolve through each layer', W / 2, H / 2 + 20);
     requestAnimationFrame(render);
     return;
   }
 
-  processActivations(now);
+  const nLayers = modelInfo.n_layers;
+  const marginTop = 50;
+  const marginBottom = 50;
+  const availH = H - marginTop - marginBottom;
+  const rowH = availH / (nLayers + 2); // +2 for input/output rows
+  const centerX = W / 2;
 
-  // --- Draw connections first (behind blocks) ---
-  for (const c of diagram.conns) {
-    const src = diagram.blockMap[c.from];
-    const dst = diagram.blockMap[c.to];
-    if (!src || !dst) continue;
+  // --- Draw the logit lens tower ---
 
-    const intensity = connIntensities[c.id] || 0;
+  // Title
+  ctx.fillStyle = '#555';
+  ctx.font = '10px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillText('LOGIT LENS', centerX, 16);
+  ctx.fillStyle = '#333';
+  ctx.font = '9px Courier New';
+  ctx.fillText('Most probable next token at each layer', centerX, 28);
 
-    // Source bottom center, dest top center
-    const sx = src.x + src.w / 2;
-    const sy = src.y + src.h;
-    const dx = dst.x + dst.w / 2;
-    const dy = dst.y;
+  // Input row
+  const inputY = marginTop;
+  ctx.fillStyle = '#333';
+  ctx.font = '9px Courier New';
+  ctx.textAlign = 'right';
+  ctx.fillText('Input', centerX - 140, inputY + rowH * 0.4);
 
-    if (c.type === 'skip') {
-      // Residual skip connection: goes right, down, then back left
-      const skipX = c.skipX || (sx + 100);
-      const alpha = 0.12 + intensity * 0.5;
-      ctx.strokeStyle = `rgba(0,221,170,${alpha})`;
-      ctx.lineWidth = 1 + intensity * 1.5;
-      ctx.setLineDash([4, 3]);
+  // Draw vertical spine
+  const spineX = centerX;
+  ctx.strokeStyle = '#1a1a2e';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(spineX, inputY);
+  ctx.lineTo(spineX, inputY + (nLayers + 1) * rowH);
+  ctx.stroke();
 
-      ctx.beginPath();
-      // From source right side
-      const fromX = src.x + src.w;
-      const fromY = src.y + src.h / 2;
-      // To dest right side
-      const toX = dst.x + dst.w;
-      const toY = dst.y + dst.h / 2;
+  // Draw each layer's prediction
+  for (let i = 0; i < nLayers; i++) {
+    const lp = currentLayerPredictions[i];
+    if (!lp) continue;
 
-      ctx.moveTo(fromX, fromY);
-      ctx.lineTo(skipX, fromY);
-      ctx.lineTo(skipX, toY);
-      ctx.lineTo(toX, toY);
-      ctx.stroke();
-      ctx.setLineDash([]);
+    const y = inputY + (i + 0.5) * rowH;
+    const topToken = lp.top_k[0];
+    const conf = lp.confidence;
+    const matchesFinal = currentFinalPredictions.length > 0 &&
+      topToken.token_id === currentFinalPredictions[0].token_id;
 
-      // Small arrow at the end
-      if (intensity > 0.05) {
-        ctx.fillStyle = `rgba(0,221,170,${alpha})`;
-        ctx.beginPath();
-        ctx.moveTo(toX, toY - 3);
-        ctx.lineTo(toX + 5, toY);
-        ctx.lineTo(toX, toY + 3);
-        ctx.fill();
-      }
-    } else {
-      // Trunk/forward: straight vertical line
-      const alpha = 0.15 + intensity * 0.6;
-      const col = typeColors[dst.type] || { r: 100, g: 100, b: 120 };
-      ctx.strokeStyle = `rgba(${col.r},${col.g},${col.b},${alpha})`;
-      ctx.lineWidth = 1 + intensity * 1.5;
+    // Entropy-based width for the "certainty bar"
+    const maxBarW = W * 0.35;
+    const barW = maxBarW * conf;
+    const barH = Math.max(12, rowH * 0.55);
 
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(dx, dy);
-      ctx.stroke();
+    // Bar color: green if matches final, orange if not
+    const barColor = matchesFinal ? '#00ffaa' : '#ff7744';
+    const barAlpha = 0.15 + conf * 0.55;
 
-      // Small arrow at destination
-      if (intensity > 0.05) {
-        ctx.fillStyle = ctx.strokeStyle;
-        ctx.beginPath();
-        ctx.moveTo(dx - 3, dy);
-        ctx.lineTo(dx, dy - 4);
-        ctx.lineTo(dx + 3, dy);
-        ctx.fill();
-      }
-    }
-  }
+    // Certainty bar (centered on spine)
+    ctx.fillStyle = matchesFinal
+      ? `rgba(0, 255, 170, ${barAlpha})`
+      : `rgba(255, 119, 68, ${barAlpha})`;
 
-  ctx.lineWidth = 1;
-  ctx.setLineDash([]);
+    const barX = spineX - barW / 2;
+    const barY = y - barH / 2;
 
-  // --- Draw blocks ---
-  for (const b of diagram.blocks) {
-    if (b.type === 'head') continue; // heads drawn inside attn block
+    // Rounded rectangle
+    const r = 3;
+    ctx.beginPath();
+    ctx.moveTo(barX + r, barY);
+    ctx.lineTo(barX + barW - r, barY);
+    ctx.quadraticCurveTo(barX + barW, barY, barX + barW, barY + r);
+    ctx.lineTo(barX + barW, barY + barH - r);
+    ctx.quadraticCurveTo(barX + barW, barY + barH, barX + barW - r, barY + barH);
+    ctx.lineTo(barX + r, barY + barH);
+    ctx.quadraticCurveTo(barX, barY + barH, barX, barY + barH - r);
+    ctx.lineTo(barX, barY + r);
+    ctx.quadraticCurveTo(barX, barY, barX + r, barY);
+    ctx.fill();
 
-    const intensity = blockIntensities[b.id] || 0;
-
-    // Block fill
-    ctx.fillStyle = blockFill(b.type, intensity);
-    ctx.fillRect(b.x, b.y, b.w, b.h);
-
-    // Block border
-    ctx.strokeStyle = blockBorder(b.type, intensity);
+    // Border
+    ctx.strokeStyle = matchesFinal
+      ? `rgba(0, 255, 170, ${0.3 + conf * 0.5})`
+      : `rgba(255, 119, 68, ${0.2 + conf * 0.3})`;
     ctx.lineWidth = 1;
-    ctx.strokeRect(b.x, b.y, b.w, b.h);
+    ctx.stroke();
 
-    // Label
-    ctx.fillStyle = `rgba(220,220,230,${0.4 + intensity * 0.5})`;
-    ctx.font = `${Math.min(9, b.h * 0.65)}px Courier New`;
+    // Layer label (left side)
+    ctx.fillStyle = '#444';
+    ctx.font = '9px Courier New';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`L${i}`, spineX - maxBarW / 2 - 8, y);
+
+    // Token text (center of bar)
+    const tokenStr = topToken.token.replace(/\n/g, '\\n').replace(/\t/g, '\\t');
+    ctx.fillStyle = matchesFinal
+      ? `rgba(0, 255, 170, ${0.5 + conf * 0.5})`
+      : `rgba(255, 180, 120, ${0.5 + conf * 0.5})`;
+    ctx.font = `${Math.min(14, barH * 0.8)}px Courier New`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.fillText(tokenStr, spineX, y);
 
-    if (b.type !== 'attn') {
-      ctx.fillText(b.label, b.x + b.w/2, b.y + b.h/2);
+    // Confidence percentage (right side)
+    ctx.fillStyle = '#555';
+    ctx.font = '9px Courier New';
+    ctx.textAlign = 'left';
+    ctx.fillText((conf * 100).toFixed(0) + '%', spineX + maxBarW / 2 + 8, y);
+
+    // Runner-up tokens (smaller, to the right)
+    if (lp.top_k.length > 1) {
+      ctx.fillStyle = '#333';
+      ctx.font = '8px Courier New';
+      ctx.textAlign = 'left';
+      const altX = spineX + maxBarW / 2 + 40;
+      for (let k = 1; k < Math.min(3, lp.top_k.length); k++) {
+        const alt = lp.top_k[k];
+        const altStr = alt.token.replace(/\n/g, '\\n');
+        ctx.fillText(
+          `${altStr} ${(alt.prob * 100).toFixed(0)}%`,
+          altX,
+          y - 6 + (k - 1) * 10
+        );
+      }
     }
 
-    // For attention blocks, draw individual heads inside
-    if (b.type === 'attn') {
-      // Label above the heads
-      ctx.fillStyle = `rgba(220,220,230,${0.3 + intensity * 0.4})`;
-      ctx.font = `${Math.min(8, b.h * 0.4)}px Courier New`;
-      ctx.fillText(b.label, b.x + b.w/2, b.y - 2);
+    // Horizontal tick on the spine
+    ctx.strokeStyle = '#2a2a3e';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(spineX - 4, y);
+    ctx.lineTo(spineX + 4, y);
+    ctx.stroke();
+  }
 
-      // Draw each head sub-block
-      for (let h = 0; h < (b.nHeads || 0); h++) {
-        const hBlock = diagram.blockMap[`L${b.layer}_h${h}`];
-        if (!hBlock) continue;
-        const hIntensity = blockIntensities[hBlock.id] || 0;
+  // Output row
+  const outputY = inputY + (nLayers + 0.5) * rowH;
+  ctx.fillStyle = '#555';
+  ctx.font = '9px Courier New';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Output', spineX - W * 0.35 / 2 - 8, outputY);
 
-        ctx.fillStyle = blockFill('head', hIntensity);
-        ctx.fillRect(hBlock.x, hBlock.y, hBlock.w, hBlock.h);
-        ctx.strokeStyle = blockBorder('head', hIntensity);
-        ctx.lineWidth = 0.5;
-        ctx.strokeRect(hBlock.x, hBlock.y, hBlock.w, hBlock.h);
+  if (currentFinalPredictions.length > 0) {
+    const fp = currentFinalPredictions[0];
+    const tokenStr = fp.token.replace(/\n/g, '\\n');
+    ctx.fillStyle = '#00ffaa';
+    ctx.font = 'bold 16px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText(tokenStr, spineX, outputY);
+
+    ctx.fillStyle = '#00ffaa80';
+    ctx.font = '10px Courier New';
+    ctx.textAlign = 'left';
+    ctx.fillText((fp.prob * 100).toFixed(1) + '%', spineX + 60, outputY);
+  }
+
+  // --- Draw convergence indicator ---
+  // Show where in the stack the model "decided" on the final token
+  if (currentFinalPredictions.length > 0) {
+    const finalId = currentFinalPredictions[0].token_id;
+    let convergenceLayer = -1;
+    for (let i = 0; i < currentLayerPredictions.length; i++) {
+      const lp = currentLayerPredictions[i];
+      if (lp.top_k[0].token_id === finalId) {
+        if (convergenceLayer === -1) convergenceLayer = i;
+      } else {
+        convergenceLayer = -1; // reset -- must be continuous to the end
+      }
+    }
+
+    if (convergenceLayer >= 0 && convergenceLayer < nLayers) {
+      const convY = inputY + (convergenceLayer + 0.5) * rowH;
+      const convEndY = outputY;
+
+      // Draw a subtle bracket on the left
+      const bracketX = spineX - W * 0.35 / 2 - 24;
+      ctx.strokeStyle = 'rgba(0, 255, 170, 0.2)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(bracketX + 4, convY - 2);
+      ctx.lineTo(bracketX, convY - 2);
+      ctx.lineTo(bracketX, convEndY + 2);
+      ctx.lineTo(bracketX + 4, convEndY + 2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#00ffaa40';
+      ctx.font = '8px Courier New';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('converged', bracketX, (convY + convEndY) / 2);
+    }
+  }
+
+  // --- Token trail (faded previous predictions) ---
+  const history = animationState.tokenHistory;
+  if (history.length > 1) {
+    // Draw faded trails from older token steps
+    for (let h = 0; h < history.length - 1; h++) {
+      const age = history.length - 1 - h;
+      const alpha = Math.max(0.03, 0.12 - age * 0.015);
+      const step = history[h];
+
+      for (let i = 0; i < step.predictions.length; i++) {
+        const lp = step.predictions[i];
+        const y = inputY + (i + 0.5) * rowH;
+        const topToken = lp.top_k[0];
+        const tokenStr = topToken.token.replace(/\n/g, '\\n');
+
+        // Offset old predictions slightly to the left
+        const offsetX = -20 - age * 12;
+        ctx.fillStyle = `rgba(100, 100, 120, ${alpha})`;
+        ctx.font = '9px Courier New';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(tokenStr, spineX + offsetX, y);
       }
     }
   }
 
-  // --- Layer labels on the left ---
-  ctx.fillStyle = '#333';
-  ctx.font = '8px Courier New';
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'middle';
-  for (const b of diagram.blocks) {
-    if (b.id.endsWith('_ln1')) {
-      ctx.fillText(`L${b.layer}`, b.x - 5, b.y + b.h/2);
+  // --- Flowing particles along the spine ---
+  if (isGenerating) {
+    // Spawn particles
+    if (Math.random() < 0.3 * speed) {
+      animationState.particles.push({
+        y: inputY,
+        speed: 0.5 + Math.random() * 0.5,
+        alpha: 0.5 + Math.random() * 0.3,
+        size: 1 + Math.random() * 1.5,
+      });
+    }
+
+    // Update and draw particles
+    for (let i = animationState.particles.length - 1; i >= 0; i--) {
+      const p = animationState.particles[i];
+      p.y += p.speed * speed * 0.3;
+      p.alpha -= 0.002;
+
+      if (p.y > outputY + 20 || p.alpha <= 0) {
+        animationState.particles.splice(i, 1);
+        continue;
+      }
+
+      ctx.fillStyle = `rgba(0, 255, 170, ${p.alpha})`;
+      ctx.beginPath();
+      ctx.arc(spineX, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 
@@ -949,72 +1005,8 @@ function render() {
 }
 
 // =========================================================================
-// Tooltip on hover
+// Utilities
 // =========================================================================
-canvas.addEventListener('mousemove', (e) => {
-  if (!diagram) return;
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-
-  const tooltip = document.getElementById('tooltip');
-  let found = false;
-
-  for (const b of diagram.blocks) {
-    if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
-      const intensity = blockIntensities[b.id] || 0;
-      let title = '';
-
-      if (b.type === 'head') {
-        title = `Layer ${b.layer} Attention Head ${b.head}`;
-      } else if (b.type === 'attn') {
-        title = `Layer ${b.layer} Multi-Head Attention`;
-      } else if (b.type === 'mlp') {
-        title = `Layer ${b.layer} MLP / FFN`;
-      } else if (b.type === 'ln') {
-        title = b.id === 'final_ln' ? 'Final LayerNorm' : `Layer ${b.layer} LayerNorm`;
-      } else if (b.type === 'add') {
-        title = `Layer ${b.layer} Residual Add (x + f(x))`;
-      } else if (b.type === 'input') {
-        title = 'Token + Position Embeddings';
-      } else if (b.type === 'output') {
-        title = 'Output Logits (unembedding)';
-      }
-
-      const infos = getBlockInfo(b);
-      let html = `<div class="tip-name">${title}</div>`;
-      html += `<div class="tip-val">Intensity: ${(intensity * 100).toFixed(0)}%</div>`;
-
-      if (infos.length > 0) {
-        for (const info of infos) {
-          html += `<div class="tip-val">Mag: ${info.mean_magnitude} | Max: ${info.max_activation}</div>`;
-          html += `<div class="tip-val">Sparsity: ${(info.sparsity * 100).toFixed(1)}%</div>`;
-        }
-      }
-
-      tooltip.innerHTML = html;
-      tooltip.style.display = 'block';
-      tooltip.style.left = (e.clientX + 12) + 'px';
-      tooltip.style.top = (e.clientY - 8) + 'px';
-      found = true;
-      break;
-    }
-  }
-
-  if (!found) tooltip.style.display = 'none';
-});
-
-function getBlockInfo(block) {
-  const infos = [];
-  for (const [name, data] of Object.entries(targetActivations)) {
-    if (data.layer_idx !== block.layer) continue;
-    if ((block.type === 'attn' || block.type === 'head') && name.includes('attn')) infos.push(data);
-    else if (block.type === 'mlp' && name.includes('mlp')) infos.push(data);
-    else if (block.type === 'ln' && name.includes('ln')) infos.push(data);
-  }
-  return infos;
-}
-
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
