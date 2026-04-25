@@ -270,7 +270,7 @@
   .legend-swatch {
     width: 8px;
     height: 8px;
-    border-radius: 50%;
+    border-radius: 2px;
   }
 </style>
 </head>
@@ -331,19 +331,19 @@
       </div>
       <div class="legend-item">
         <div class="legend-swatch" style="background: #4499ff;"></div>
-        <span>MLP</span>
+        <span>MLP / FFN</span>
       </div>
       <div class="legend-item">
         <div class="legend-swatch" style="background: #aa55ff;"></div>
         <span>LayerNorm</span>
       </div>
       <div class="legend-item">
-        <div class="legend-swatch" style="background: #00ffaa;"></div>
-        <span>Residual</span>
+        <div class="legend-swatch" style="background: #00ddaa;"></div>
+        <span>Residual Add</span>
       </div>
       <div class="legend-item">
-        <div class="legend-swatch" style="background: #333; border: 1px solid #555;"></div>
-        <span>Pathway (brighter = stronger)</span>
+        <div class="legend-swatch" style="background: #555; border: 1px dashed #888;"></div>
+        <span>Skip connection</span>
       </div>
     </div>
     <div id="tooltip" class="tooltip"></div>
@@ -376,12 +376,12 @@ let activeWave = null;
 const canvas = document.getElementById('brain-canvas');
 const ctx = canvas.getContext('2d');
 
-// Graph layout
-let graph = null; // { nodes: [], edges: [] }
+// Diagram layout -- blocks and connections
+let diagram = null;
 
-// Per-node smoothed intensities
-let nodeIntensities = {};  // nodeId -> current intensity
-let edgeIntensities = {};  // edgeId -> current intensity
+// Smoothed intensities per block
+let blockIntensities = {};
+let connIntensities = {};
 
 // =========================================================================
 // WebSocket
@@ -413,7 +413,7 @@ function handleMessage(data) {
       modelInfo = data.model_info;
       document.getElementById('model-info').textContent =
         `${modelInfo.name} | ${modelInfo.n_layers}L x ${modelInfo.n_heads}H | d=${modelInfo.d_model}`;
-      buildGraph();
+      buildDiagram();
       queueActivations(data.activations);
       tokenCount = data.n_tokens;
       startTime = performance.now();
@@ -474,9 +474,8 @@ function startScan() {
   document.getElementById('status-dot').className = 'status-dot generating';
   document.getElementById('stats').textContent = '';
 
-  // Reset intensities
-  nodeIntensities = {};
-  edgeIntensities = {};
+  blockIntensities = {};
+  connIntensities = {};
 
   ws.send(JSON.stringify({
     type: 'generate',
@@ -501,9 +500,20 @@ document.getElementById('prompt-input').addEventListener('keydown', (e) => {
 });
 
 // =========================================================================
-// Graph construction -- node-and-edge network
+// Diagram construction -- accurate GPT-2 pre-norm transformer
 // =========================================================================
-function buildGraph() {
+// GPT-2 architecture per layer (pre-LN variant):
+//   x ─────────────────────────────┐
+//   │                              │ (residual)
+//   ├─> LN1 ─> Multi-Head Attn ───┤
+//   │                              + (add)
+//   x ─────────────────────────────┐
+//   │                              │ (residual)
+//   ├─> LN2 ─> MLP (FFN) ─────────┤
+//   │                              + (add)
+//   x (to next layer)
+
+function buildDiagram() {
   if (!modelInfo) return;
 
   const W = canvas.width / window.devicePixelRatio;
@@ -511,159 +521,154 @@ function buildGraph() {
   const nLayers = modelInfo.n_layers;
   const nHeads = modelInfo.n_heads;
 
-  const nodes = [];
-  const edges = [];
+  const blocks = [];   // rectangles
+  const conns = [];     // connections (lines/arrows)
 
-  // Vertical layout: input at top, output at bottom
-  // Each layer has: LN1 -> Attention Heads -> Residual+ -> LN2 -> MLP -> Residual+
-  // We show each as nodes connected by edges
-
-  const marginTop = 40;
-  const marginBottom = 40;
-  const marginX = 30;
+  // Layout constants
+  const marginTop = 35;
+  const marginBottom = 35;
   const availH = H - marginTop - marginBottom;
-  const availW = W - marginX * 2;
 
-  // We have nLayers * 2 "rows" (attn row + mlp row) plus input/output
-  // But to keep it compact, each layer gets 2 sub-rows
-  const totalRows = nLayers * 2 + 2; // +2 for input embed + output logits
-  const rowSpacing = availH / (totalRows - 1);
+  // Center column X position
+  const centerX = W / 2;
 
-  // Node radius scales with available space
-  const baseR = Math.min(6, Math.max(3, Math.min(availW / (nHeads * 4), rowSpacing / 4)));
+  // Each layer has: LN1, ATTN, ADD1, LN2, MLP, ADD2 = 6 components
+  // Plus input embed and output logits = 2 more
+  // Total vertical slots = nLayers * 6 + 2
+  // But we group them tighter: each layer is one "block" visually
 
-  // Input embedding node
-  const inputNode = {
-    id: 'input',
-    type: 'input',
-    label: 'EMBED',
-    x: W / 2,
-    y: marginTop,
-    r: baseR + 2,
-    layer: -1,
-  };
-  nodes.push(inputNode);
+  // Block dimensions -- keep everything small and compact
+  const layerH = availH / (nLayers + 1.5); // height per layer
+  const compH = Math.min(14, layerH / 7);  // component height
+  const compGap = Math.max(1, (layerH - compH * 6) / 7); // gap between components
+  const mainW = Math.min(140, W * 0.22);   // width of main blocks (LN, MLP)
+  const attnW = Math.min(180, W * 0.3);    // width of attention block (wider, has heads)
+  const addW = Math.min(30, W * 0.06);     // width of add blocks
+  const headW = Math.max(6, (attnW - 4) / nHeads - 1); // per-head width inside attn
 
-  let prevNodeIds = ['input']; // nodes from previous "row" to connect from
+  // Residual bypass offset (how far right the skip line runs)
+  const skipOffsetX = Math.min(130, W * 0.2);
+
+  // Input block
+  const inputY = marginTop;
+  blocks.push({
+    id: 'input', type: 'input', label: 'Token Embedding + Positional Encoding',
+    x: centerX - mainW/2, y: inputY, w: mainW, h: compH + 2, layer: -1,
+  });
+
+  let curY = inputY + compH + 2 + compGap * 2;
 
   for (let L = 0; L < nLayers; L++) {
-    const attnRowY = marginTop + (L * 2 + 1) * rowSpacing;
-    const mlpRowY = marginTop + (L * 2 + 2) * rowSpacing;
+    const layerStartY = curY;
 
-    // --- Attention sub-row ---
-    // LN1 node (small, left side)
+    // LN1
     const ln1Id = `L${L}_ln1`;
-    const ln1X = marginX + availW * 0.08;
-    nodes.push({
-      id: ln1Id, type: 'ln', label: `LN`, layer: L,
-      x: ln1X, y: attnRowY, r: baseR * 0.7,
+    blocks.push({
+      id: ln1Id, type: 'ln', label: 'LayerNorm',
+      x: centerX - mainW/2, y: curY, w: mainW, h: compH, layer: L,
     });
+    curY += compH + compGap;
 
-    // Edges from previous row to LN1
-    for (const pid of prevNodeIds) {
-      edges.push({ from: pid, to: ln1Id, type: 'residual' });
-    }
-
-    // Attention head nodes spread across the middle
-    const headIds = [];
-    const headsStartX = marginX + availW * 0.18;
-    const headsEndX = marginX + availW * 0.78;
-    const headSpacing = nHeads > 1 ? (headsEndX - headsStartX) / (nHeads - 1) : 0;
-
+    // Multi-Head Attention (contains sub-heads)
+    const attnId = `L${L}_attn`;
+    const attnH = compH + 4; // slightly taller to show heads
+    blocks.push({
+      id: attnId, type: 'attn', label: `Multi-Head Attention`,
+      x: centerX - attnW/2, y: curY, w: attnW, h: attnH, layer: L,
+      nHeads: nHeads, headW: headW,
+    });
+    // Individual head sub-blocks (for per-head intensity)
     for (let h = 0; h < nHeads; h++) {
-      const hId = `L${L}_h${h}`;
-      const hx = nHeads === 1 ? W / 2 : headsStartX + h * headSpacing;
-      nodes.push({
-        id: hId, type: 'attn', label: `H${h}`, layer: L, head: h,
-        x: hx, y: attnRowY, r: baseR,
+      blocks.push({
+        id: `L${L}_h${h}`, type: 'head', label: `H${h}`,
+        x: centerX - attnW/2 + 2 + h * (headW + 1),
+        y: curY + 2, w: headW, h: attnH - 4,
+        layer: L, head: h, parentId: attnId,
       });
-      headIds.push(hId);
-
-      // Edge from LN1 to each head
-      edges.push({ from: ln1Id, to: hId, type: 'forward' });
     }
+    curY += attnH + compGap;
 
-    // Residual add node after attention
+    // Residual Add 1
     const add1Id = `L${L}_add1`;
-    const add1X = marginX + availW * 0.88;
-    nodes.push({
-      id: add1Id, type: 'residual', label: '+', layer: L,
-      x: add1X, y: attnRowY, r: baseR * 0.8,
+    blocks.push({
+      id: add1Id, type: 'add', label: '+',
+      x: centerX - addW/2, y: curY, w: addW, h: compH, layer: L,
     });
+    curY += compH + compGap;
 
-    // Edges from heads to add1
-    for (const hId of headIds) {
-      edges.push({ from: hId, to: add1Id, type: 'forward' });
-    }
-    // Skip connection to add1
-    for (const pid of prevNodeIds) {
-      edges.push({ from: pid, to: add1Id, type: 'skip' });
-    }
-
-    // --- MLP sub-row ---
+    // LN2
     const ln2Id = `L${L}_ln2`;
-    const ln2X = marginX + availW * 0.25;
-    nodes.push({
-      id: ln2Id, type: 'ln', label: 'LN', layer: L,
-      x: ln2X, y: mlpRowY, r: baseR * 0.7,
+    blocks.push({
+      id: ln2Id, type: 'ln', label: 'LayerNorm',
+      x: centerX - mainW/2, y: curY, w: mainW, h: compH, layer: L,
     });
-    edges.push({ from: add1Id, to: ln2Id, type: 'forward' });
+    curY += compH + compGap;
 
-    // MLP node (one larger node)
+    // MLP / FFN
     const mlpId = `L${L}_mlp`;
-    nodes.push({
-      id: mlpId, type: 'mlp', label: 'MLP', layer: L,
-      x: W / 2, y: mlpRowY, r: baseR * 1.3,
+    blocks.push({
+      id: mlpId, type: 'mlp', label: 'FFN (MLP)',
+      x: centerX - mainW/2, y: curY, w: mainW, h: compH + 2, layer: L,
     });
-    edges.push({ from: ln2Id, to: mlpId, type: 'forward' });
+    curY += compH + 2 + compGap;
 
-    // Residual add node after MLP
+    // Residual Add 2
     const add2Id = `L${L}_add2`;
-    const add2X = marginX + availW * 0.75;
-    nodes.push({
-      id: add2Id, type: 'residual', label: '+', layer: L,
-      x: add2X, y: mlpRowY, r: baseR * 0.8,
+    blocks.push({
+      id: add2Id, type: 'add', label: '+',
+      x: centerX - addW/2, y: curY, w: addW, h: compH, layer: L,
     });
-    edges.push({ from: mlpId, to: add2Id, type: 'forward' });
-    // Skip connection from add1 to add2
-    edges.push({ from: add1Id, to: add2Id, type: 'skip' });
+    curY += compH + compGap * 2;
 
-    prevNodeIds = [add2Id];
+    // --- Connections within this layer ---
+    // Previous output -> LN1 (main trunk)
+    const prevId = L === 0 ? 'input' : `L${L-1}_add2`;
+    conns.push({ id: `c_${prevId}_${ln1Id}`, from: prevId, to: ln1Id, type: 'trunk' });
+
+    // LN1 -> Attention
+    conns.push({ id: `c_${ln1Id}_${attnId}`, from: ln1Id, to: attnId, type: 'forward' });
+
+    // Attention -> Add1
+    conns.push({ id: `c_${attnId}_${add1Id}`, from: attnId, to: add1Id, type: 'forward' });
+
+    // Skip: previous output -> Add1 (residual around attention)
+    conns.push({ id: `c_skip1_L${L}`, from: prevId, to: add1Id, type: 'skip', skipX: centerX + skipOffsetX });
+
+    // Add1 -> LN2
+    conns.push({ id: `c_${add1Id}_${ln2Id}`, from: add1Id, to: ln2Id, type: 'trunk' });
+
+    // LN2 -> MLP
+    conns.push({ id: `c_${ln2Id}_${mlpId}`, from: ln2Id, to: mlpId, type: 'forward' });
+
+    // MLP -> Add2
+    conns.push({ id: `c_${mlpId}_${add2Id}`, from: mlpId, to: add2Id, type: 'forward' });
+
+    // Skip: Add1 -> Add2 (residual around MLP)
+    conns.push({ id: `c_skip2_L${L}`, from: add1Id, to: add2Id, type: 'skip', skipX: centerX + skipOffsetX });
   }
 
-  // Output logits node
-  const outputNode = {
-    id: 'output',
-    type: 'output',
-    label: 'LOGITS',
-    x: W / 2,
-    y: marginTop + (totalRows - 1) * rowSpacing,
-    r: baseR + 2,
-    layer: nLayers,
-  };
-  nodes.push(outputNode);
-  for (const pid of prevNodeIds) {
-    edges.push({ from: pid, to: outputNode.id, type: 'forward' });
-  }
+  // Output block
+  const outputId = 'output';
+  blocks.push({
+    id: outputId, type: 'output', label: 'Output Logits',
+    x: centerX - mainW/2, y: curY, w: mainW, h: compH + 2, layer: modelInfo.n_layers,
+  });
+  const lastAdd = `L${nLayers-1}_add2`;
+  conns.push({ id: `c_${lastAdd}_output`, from: lastAdd, to: outputId, type: 'trunk' });
 
   // Build lookup
-  const nodeMap = {};
-  for (const n of nodes) nodeMap[n.id] = n;
+  const blockMap = {};
+  for (const b of blocks) blockMap[b.id] = b;
 
-  // Assign edge IDs
-  for (let i = 0; i < edges.length; i++) {
-    edges[i].id = `e${i}`;
-  }
+  diagram = { blocks, conns, blockMap };
 
-  graph = { nodes, edges, nodeMap };
-
-  // Initialize intensities
-  for (const n of nodes) nodeIntensities[n.id] = 0;
-  for (const e of edges) edgeIntensities[e.id] = 0;
+  // Init intensities
+  for (const b of blocks) blockIntensities[b.id] = 0;
+  for (const c of conns) connIntensities[c.id] = 0;
 }
 
 // =========================================================================
-// Animation helpers
+// Animation
 // =========================================================================
 function lerp(a, b, t) { return a + (b - a) * t; }
 
@@ -681,21 +686,20 @@ function getWaveDuration() {
 }
 
 // =========================================================================
-// Wave processing -- propagate activations through the graph
+// Process activation waves
 // =========================================================================
 function processWaves(now) {
-  if (!graph) return;
+  if (!diagram) return;
 
   const speed = getSpeedFactor();
-  const decayRate = 0.008 + speed * 0.004;
-  const riseRate = 0.06 + speed * 0.04;
+  const decayRate = 0.006 + speed * 0.003;
+  const riseRate = 0.05 + speed * 0.03;
 
   // Start next wave from queue
   if (!activeWave && activationQueue.length > 0) {
     const snapshot = activationQueue.shift();
     const acts = snapshot.activations;
 
-    // Parse into per-layer targets
     const layerTargets = {};
     for (let i = 0; i < modelInfo.n_layers; i++) {
       layerTargets[i] = { attn: 0, mlp: 0, ln: 0, heads: [] };
@@ -711,13 +715,11 @@ function processWaves(now) {
 
       if (name.includes('attn')) {
         layerTargets[idx].attn = Math.max(layerTargets[idx].attn, mag);
-        // Per-head data if available
         if (info.head_data) {
           for (let h = 0; h < info.head_data.length && h < modelInfo.n_heads; h++) {
             layerTargets[idx].heads[h] = Math.min(1, info.head_data[h] / 20);
           }
         } else {
-          // Distribute with variation
           for (let h = 0; h < modelInfo.n_heads; h++) {
             layerTargets[idx].heads[h] = mag * (0.5 + 0.5 * Math.random());
           }
@@ -729,7 +731,7 @@ function processWaves(now) {
       }
     }
 
-    // Store raw for tooltip
+    // Store for tooltips
     targetActivations = {};
     for (const [name, info] of Object.entries(acts)) {
       targetActivations[name] = info;
@@ -739,17 +741,12 @@ function processWaves(now) {
     const waveDur = getWaveDuration();
     const layerDelay = waveDur / (nLayers + 4);
 
-    activeWave = {
-      startTime: now,
-      layerTargets,
-      layerDelay,
-      waveDur,
-    };
+    activeWave = { startTime: now, layerTargets, layerDelay, waveDur };
   }
 
-  // Compute target intensities per node based on wave timing
-  const nodeTargets = {};
-  for (const n of graph.nodes) nodeTargets[n.id] = 0;
+  // Compute target intensities
+  const blockTargets = {};
+  for (const b of diagram.blocks) blockTargets[b.id] = 0;
 
   if (activeWave) {
     const nLayers = modelInfo.n_layers;
@@ -761,94 +758,83 @@ function processWaves(now) {
 
       if (elapsed <= 0) continue;
 
-      // Each sub-component within the layer has its own stagger
       const subDelay = activeWave.layerDelay / 6;
-      const envDur = activeWave.layerDelay * 2.5;
+      const envDur = activeWave.layerDelay * 2;
+
+      // Envelope: ramp up then hold, no oscillation
+      function envelope(elapsedSub) {
+        if (elapsedSub <= 0) return 0;
+        const rampUp = Math.min(1, elapsedSub / envDur);
+        const fadeOut = Math.max(0, 1 - Math.max(0, elapsedSub - envDur) / (envDur * 2));
+        return rampUp * fadeOut;
+      }
 
       // LN1
-      const ln1Elapsed = elapsed;
-      if (ln1Elapsed > 0) {
-        const t = easeInOut(Math.min(1, ln1Elapsed / envDur));
-        nodeTargets[`L${L}_ln1`] = lt.ln * t;
-      }
+      blockTargets[`L${L}_ln1`] = lt.ln * envelope(elapsed);
 
-      // Attention heads
+      // Attention (overall)
+      const attnElapsed = elapsed - subDelay;
+      blockTargets[`L${L}_attn`] = lt.attn * envelope(attnElapsed);
+
+      // Per-head
       for (let h = 0; h < modelInfo.n_heads; h++) {
-        const hElapsed = elapsed - subDelay;
-        if (hElapsed > 0) {
-          const t = easeInOut(Math.min(1, hElapsed / envDur));
-          nodeTargets[`L${L}_h${h}`] = lt.heads[h] * t;
-        }
+        blockTargets[`L${L}_h${h}`] = lt.heads[h] * envelope(attnElapsed);
       }
 
-      // Residual add 1
-      const a1Elapsed = elapsed - subDelay * 2;
-      if (a1Elapsed > 0) {
-        const t = easeInOut(Math.min(1, a1Elapsed / envDur));
-        nodeTargets[`L${L}_add1`] = Math.max(lt.attn, lt.ln) * t * 0.6;
-      }
+      // Add1
+      const add1Elapsed = elapsed - subDelay * 2;
+      blockTargets[`L${L}_add1`] = Math.max(lt.attn, lt.ln) * envelope(add1Elapsed) * 0.7;
 
       // LN2
       const ln2Elapsed = elapsed - subDelay * 3;
-      if (ln2Elapsed > 0) {
-        const t = easeInOut(Math.min(1, ln2Elapsed / envDur));
-        nodeTargets[`L${L}_ln2`] = lt.ln * t;
-      }
+      blockTargets[`L${L}_ln2`] = lt.ln * envelope(ln2Elapsed);
 
       // MLP
       const mlpElapsed = elapsed - subDelay * 4;
-      if (mlpElapsed > 0) {
-        const t = easeInOut(Math.min(1, mlpElapsed / envDur));
-        nodeTargets[`L${L}_mlp`] = lt.mlp * t;
-      }
+      blockTargets[`L${L}_mlp`] = lt.mlp * envelope(mlpElapsed);
 
-      // Residual add 2
-      const a2Elapsed = elapsed - subDelay * 5;
-      if (a2Elapsed > 0) {
-        const t = easeInOut(Math.min(1, a2Elapsed / envDur));
-        nodeTargets[`L${L}_add2`] = Math.max(lt.mlp, lt.ln) * t * 0.6;
-      }
+      // Add2
+      const add2Elapsed = elapsed - subDelay * 5;
+      blockTargets[`L${L}_add2`] = Math.max(lt.mlp, lt.ln) * envelope(add2Elapsed) * 0.7;
     }
 
-    // Input/output nodes
+    // Input/output
     const inputElapsed = now - activeWave.startTime;
     if (inputElapsed > 0) {
-      nodeTargets['input'] = easeInOut(Math.min(1, inputElapsed / (activeWave.layerDelay * 2))) * 0.5;
+      blockTargets['input'] = Math.min(1, inputElapsed / (activeWave.layerDelay * 2)) * 0.4;
     }
     const outputDelay = nLayers * activeWave.layerDelay;
     const outputElapsed = now - activeWave.startTime - outputDelay;
     if (outputElapsed > 0) {
-      nodeTargets['output'] = easeInOut(Math.min(1, outputElapsed / (activeWave.layerDelay * 2))) * 0.5;
+      blockTargets['output'] = Math.min(1, outputElapsed / (activeWave.layerDelay * 2)) * 0.4;
     }
 
-    // Check if wave done
-    const totalWaveTime = activeWave.waveDur * 1.5;
-    if (now - activeWave.startTime > totalWaveTime) {
+    if (now - activeWave.startTime > activeWave.waveDur * 1.5) {
       activeWave = null;
     }
   }
 
-  // Smooth toward targets (or decay)
-  for (const n of graph.nodes) {
-    const target = nodeTargets[n.id] || 0;
-    const cur = nodeIntensities[n.id] || 0;
+  // Smooth toward targets
+  for (const b of diagram.blocks) {
+    const target = blockTargets[b.id] || 0;
+    const cur = blockIntensities[b.id] || 0;
     if (target > cur) {
-      nodeIntensities[n.id] = lerp(cur, target, riseRate);
+      blockIntensities[b.id] = lerp(cur, target, riseRate);
     } else {
-      nodeIntensities[n.id] = Math.max(0, cur - decayRate);
+      blockIntensities[b.id] = Math.max(0, cur - decayRate);
     }
   }
 
-  // Edge intensities = min(source intensity, dest intensity) with some boost
-  for (const e of graph.edges) {
-    const srcI = nodeIntensities[e.from] || 0;
-    const dstI = nodeIntensities[e.to] || 0;
-    const target = Math.min(srcI, dstI) * 1.2;
-    const cur = edgeIntensities[e.id] || 0;
+  // Connection intensities: average of source and dest block
+  for (const c of diagram.conns) {
+    const srcI = blockIntensities[c.from] || 0;
+    const dstI = blockIntensities[c.to] || 0;
+    const target = (srcI + dstI) / 2;
+    const cur = connIntensities[c.id] || 0;
     if (target > cur) {
-      edgeIntensities[e.id] = lerp(cur, target, riseRate);
+      connIntensities[c.id] = lerp(cur, target, riseRate);
     } else {
-      edgeIntensities[e.id] = Math.max(0, cur - decayRate);
+      connIntensities[c.id] = Math.max(0, cur - decayRate);
     }
   }
 }
@@ -864,40 +850,31 @@ function resizeCanvas() {
   canvas.style.height = rect.height + 'px';
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  if (modelInfo) buildGraph();
+  if (modelInfo) buildDiagram();
 }
 
-function nodeColor(intensity, type) {
-  intensity = Math.min(1, Math.max(0, intensity));
-  if (type === 'attn') {
-    return `rgba(255,${Math.floor(100 + intensity * 50)},${Math.floor(50 + intensity * 30)},${0.3 + intensity * 0.7})`;
-  } else if (type === 'mlp') {
-    return `rgba(${Math.floor(60 + intensity * 30)},${Math.floor(130 + intensity * 50)},255,${0.3 + intensity * 0.7})`;
-  } else if (type === 'ln') {
-    return `rgba(${Math.floor(150 + intensity * 50)},${Math.floor(70 + intensity * 30)},255,${0.3 + intensity * 0.7})`;
-  } else if (type === 'residual') {
-    return `rgba(0,255,170,${0.2 + intensity * 0.6})`;
-  } else if (type === 'input' || type === 'output') {
-    return `rgba(0,255,170,${0.3 + intensity * 0.5})`;
-  }
-  return `rgba(100,100,120,${0.3 + intensity * 0.5})`;
+// Color helpers
+const typeColors = {
+  attn:   { r: 255, g: 119, b: 68 },   // orange
+  head:   { r: 255, g: 119, b: 68 },
+  mlp:    { r: 68,  g: 153, b: 255 },   // blue
+  ln:     { r: 170, g: 85,  b: 255 },   // purple
+  add:    { r: 0,   g: 221, b: 170 },   // teal
+  input:  { r: 0,   g: 200, b: 150 },
+  output: { r: 0,   g: 200, b: 150 },
+};
+
+function blockFill(type, intensity) {
+  const c = typeColors[type] || { r: 100, g: 100, b: 120 };
+  // Idle: very dim. Active: brighter.
+  const alpha = 0.08 + intensity * 0.55;
+  return `rgba(${c.r},${c.g},${c.b},${alpha})`;
 }
 
-function nodeBorderColor(intensity, type) {
-  intensity = Math.min(1, Math.max(0, intensity));
-  if (type === 'attn') return `rgba(255,140,80,${0.4 + intensity * 0.6})`;
-  if (type === 'mlp') return `rgba(80,180,255,${0.4 + intensity * 0.6})`;
-  if (type === 'ln') return `rgba(180,100,255,${0.4 + intensity * 0.6})`;
-  if (type === 'residual') return `rgba(0,255,170,${0.3 + intensity * 0.7})`;
-  return `rgba(0,255,170,${0.4 + intensity * 0.5})`;
-}
-
-function glowColor(type) {
-  if (type === 'attn') return '#ff8844';
-  if (type === 'mlp') return '#4499ff';
-  if (type === 'ln') return '#aa55ff';
-  if (type === 'residual') return '#00ffaa';
-  return '#00ffaa';
+function blockBorder(type, intensity) {
+  const c = typeColors[type] || { r: 100, g: 100, b: 120 };
+  const alpha = 0.25 + intensity * 0.65;
+  return `rgba(${c.r},${c.g},${c.b},${alpha})`;
 }
 
 function render() {
@@ -907,7 +884,7 @@ function render() {
 
   ctx.clearRect(0, 0, W, H);
 
-  if (!graph) {
+  if (!diagram) {
     ctx.fillStyle = '#555';
     ctx.font = '13px Courier New';
     ctx.textAlign = 'center';
@@ -919,138 +896,137 @@ function render() {
 
   processWaves(now);
 
-  // --- Draw edges first (behind nodes) ---
-  for (const e of graph.edges) {
-    const src = graph.nodeMap[e.from];
-    const dst = graph.nodeMap[e.to];
+  // --- Draw connections first (behind blocks) ---
+  for (const c of diagram.conns) {
+    const src = diagram.blockMap[c.from];
+    const dst = diagram.blockMap[c.to];
     if (!src || !dst) continue;
 
-    const intensity = edgeIntensities[e.id] || 0;
+    const intensity = connIntensities[c.id] || 0;
 
-    if (e.type === 'skip') {
-      // Skip connections: curved, dashed, more subtle
-      const alpha = 0.04 + intensity * 0.35;
-      ctx.strokeStyle = `rgba(0,255,170,${alpha})`;
-      ctx.lineWidth = 0.5 + intensity * 1.5;
-      ctx.setLineDash([3, 4]);
+    // Source bottom center, dest top center
+    const sx = src.x + src.w / 2;
+    const sy = src.y + src.h;
+    const dx = dst.x + dst.w / 2;
+    const dy = dst.y;
+
+    if (c.type === 'skip') {
+      // Residual skip connection: goes right, down, then back left
+      const skipX = c.skipX || (sx + 100);
+      const alpha = 0.12 + intensity * 0.5;
+      ctx.strokeStyle = `rgba(0,221,170,${alpha})`;
+      ctx.lineWidth = 1 + intensity * 1.5;
+      ctx.setLineDash([4, 3]);
 
       ctx.beginPath();
-      // Curve outward to the right
-      const cpX = Math.max(src.x, dst.x) + 30 + intensity * 10;
-      const cpY = (src.y + dst.y) / 2;
-      ctx.moveTo(src.x + src.r, src.y);
-      ctx.quadraticCurveTo(cpX, cpY, dst.x + dst.r, dst.y);
+      // From source right side
+      const fromX = src.x + src.w;
+      const fromY = src.y + src.h / 2;
+      // To dest right side
+      const toX = dst.x + dst.w;
+      const toY = dst.y + dst.h / 2;
+
+      ctx.moveTo(fromX, fromY);
+      ctx.lineTo(skipX, fromY);
+      ctx.lineTo(skipX, toY);
+      ctx.lineTo(toX, toY);
       ctx.stroke();
       ctx.setLineDash([]);
-    } else {
-      // Forward connections: straight lines
-      const alpha = 0.06 + intensity * 0.5;
-      let color;
-      if (e.type === 'residual') {
-        color = `rgba(0,255,170,${alpha})`;
-      } else {
-        // Color based on destination type
-        if (dst.type === 'attn') color = `rgba(255,130,70,${alpha})`;
-        else if (dst.type === 'mlp') color = `rgba(80,160,255,${alpha})`;
-        else if (dst.type === 'ln') color = `rgba(170,90,255,${alpha})`;
-        else color = `rgba(0,255,170,${alpha})`;
-      }
 
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 0.4 + intensity * 2;
+      // Small arrow at the end
+      if (intensity > 0.05) {
+        ctx.fillStyle = `rgba(0,221,170,${alpha})`;
+        ctx.beginPath();
+        ctx.moveTo(toX, toY - 3);
+        ctx.lineTo(toX + 5, toY);
+        ctx.lineTo(toX, toY + 3);
+        ctx.fill();
+      }
+    } else {
+      // Trunk/forward: straight vertical line
+      const alpha = 0.15 + intensity * 0.6;
+      const col = typeColors[dst.type] || { r: 100, g: 100, b: 120 };
+      ctx.strokeStyle = `rgba(${col.r},${col.g},${col.b},${alpha})`;
+      ctx.lineWidth = 1 + intensity * 1.5;
 
       ctx.beginPath();
-      // Draw from edge of source circle to edge of dest circle
-      const dx = dst.x - src.x;
-      const dy = dst.y - src.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 1) continue;
-      const nx = dx / dist;
-      const ny = dy / dist;
-
-      ctx.moveTo(src.x + nx * src.r, src.y + ny * src.r);
-      ctx.lineTo(dst.x - nx * dst.r, dst.y - ny * dst.r);
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(dx, dy);
       ctx.stroke();
 
-      // Glow effect on active edges
-      if (intensity > 0.2) {
-        ctx.shadowColor = color;
-        ctx.shadowBlur = intensity * 6;
-        ctx.globalAlpha = intensity * 0.4;
+      // Small arrow at destination
+      if (intensity > 0.05) {
+        ctx.fillStyle = ctx.strokeStyle;
         ctx.beginPath();
-        ctx.moveTo(src.x + nx * src.r, src.y + ny * src.r);
-        ctx.lineTo(dst.x - nx * dst.r, dst.y - ny * dst.r);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-        ctx.shadowBlur = 0;
+        ctx.moveTo(dx - 3, dy);
+        ctx.lineTo(dx, dy - 4);
+        ctx.lineTo(dx + 3, dy);
+        ctx.fill();
       }
     }
   }
 
   ctx.lineWidth = 1;
+  ctx.setLineDash([]);
 
-  // --- Draw nodes ---
-  for (const n of graph.nodes) {
-    const intensity = nodeIntensities[n.id] || 0;
-    const r = n.r + intensity * 2; // Slightly grow when active
+  // --- Draw blocks ---
+  for (const b of diagram.blocks) {
+    if (b.type === 'head') continue; // heads drawn inside attn block
 
-    // Glow
-    if (intensity > 0.15) {
-      ctx.shadowColor = glowColor(n.type);
-      ctx.shadowBlur = intensity * 12;
+    const intensity = blockIntensities[b.id] || 0;
+
+    // Block fill
+    ctx.fillStyle = blockFill(b.type, intensity);
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+
+    // Block border
+    ctx.strokeStyle = blockBorder(b.type, intensity);
+    ctx.lineWidth = 1;
+    ctx.strokeRect(b.x, b.y, b.w, b.h);
+
+    // Label
+    ctx.fillStyle = `rgba(220,220,230,${0.4 + intensity * 0.5})`;
+    ctx.font = `${Math.min(9, b.h * 0.6)}px Courier New`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (b.type === 'add') {
+      ctx.fillText('+', b.x + b.w/2, b.y + b.h/2);
+    } else if (b.type !== 'attn') {
+      ctx.fillText(b.label, b.x + b.w/2, b.y + b.h/2);
     }
 
-    // Fill
-    ctx.fillStyle = nodeColor(intensity, n.type);
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-    ctx.fill();
+    // For attention blocks, draw individual heads inside
+    if (b.type === 'attn') {
+      // Label above the heads
+      ctx.fillStyle = `rgba(220,220,230,${0.3 + intensity * 0.4})`;
+      ctx.font = `${Math.min(8, b.h * 0.4)}px Courier New`;
+      ctx.fillText(b.label, b.x + b.w/2, b.y - 2);
 
-    // Border
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = nodeBorderColor(intensity, n.type);
-    ctx.lineWidth = 0.5 + intensity * 1;
-    ctx.stroke();
-    ctx.lineWidth = 1;
+      // Draw each head sub-block
+      for (let h = 0; h < (b.nHeads || 0); h++) {
+        const hBlock = diagram.blockMap[`L${b.layer}_h${h}`];
+        if (!hBlock) continue;
+        const hIntensity = blockIntensities[hBlock.id] || 0;
 
-    // Pulsing ring for highly active nodes
-    if (intensity > 0.5) {
-      const pulsePhase = (now * 0.003 + n.x * 0.01) % 1;
-      const pulseR = r + 2 + pulsePhase * 6;
-      const pulseAlpha = (1 - pulsePhase) * intensity * 0.3;
-      ctx.strokeStyle = `rgba(255,255,255,${pulseAlpha})`;
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, pulseR, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.lineWidth = 1;
+        ctx.fillStyle = blockFill('head', hIntensity);
+        ctx.fillRect(hBlock.x, hBlock.y, hBlock.w, hBlock.h);
+        ctx.strokeStyle = blockBorder('head', hIntensity);
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(hBlock.x, hBlock.y, hBlock.w, hBlock.h);
+      }
     }
   }
 
-  // --- Layer labels (subtle, on the far left) ---
+  // --- Layer labels on the left ---
   ctx.fillStyle = '#333';
   ctx.font = '8px Courier New';
   ctx.textAlign = 'right';
-  for (const n of graph.nodes) {
-    if (n.id.endsWith('_ln1')) {
-      ctx.fillText(`L${n.layer}`, 18, n.y + 3);
+  ctx.textBaseline = 'middle';
+  for (const b of diagram.blocks) {
+    if (b.id.endsWith('_ln1')) {
+      ctx.fillText(`L${b.layer}`, b.x - 5, b.y + b.h/2);
     }
-  }
-
-  // Input / output labels
-  const inputN = graph.nodeMap['input'];
-  const outputN = graph.nodeMap['output'];
-  if (inputN) {
-    ctx.fillStyle = '#555';
-    ctx.font = '9px Courier New';
-    ctx.textAlign = 'center';
-    ctx.fillText('INPUT', inputN.x, inputN.y - inputN.r - 5);
-  }
-  if (outputN) {
-    ctx.fillStyle = '#555';
-    ctx.font = '9px Courier New';
-    ctx.textAlign = 'center';
-    ctx.fillText('OUTPUT', outputN.x, outputN.y + outputN.r + 12);
   }
 
   requestAnimationFrame(render);
@@ -1060,7 +1036,7 @@ function render() {
 // Tooltip on hover
 // =========================================================================
 canvas.addEventListener('mousemove', (e) => {
-  if (!graph) return;
+  if (!diagram) return;
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
@@ -1068,31 +1044,28 @@ canvas.addEventListener('mousemove', (e) => {
   const tooltip = document.getElementById('tooltip');
   let found = false;
 
-  for (const n of graph.nodes) {
-    const dx = x - n.x;
-    const dy = y - n.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist <= n.r + 4) {
-      const intensity = nodeIntensities[n.id] || 0;
+  for (const b of diagram.blocks) {
+    if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
+      const intensity = blockIntensities[b.id] || 0;
       let title = '';
-      let details = '';
 
-      if (n.type === 'attn') {
-        title = `Layer ${n.layer} Attention Head ${n.head}`;
-      } else if (n.type === 'mlp') {
-        title = `Layer ${n.layer} MLP`;
-      } else if (n.type === 'ln') {
-        title = `Layer ${n.layer} LayerNorm`;
-      } else if (n.type === 'residual') {
-        title = `Layer ${n.layer} Residual Add`;
-      } else if (n.type === 'input') {
-        title = 'Input Embeddings';
-      } else if (n.type === 'output') {
+      if (b.type === 'head') {
+        title = `Layer ${b.layer} Attention Head ${b.head}`;
+      } else if (b.type === 'attn') {
+        title = `Layer ${b.layer} Multi-Head Attention`;
+      } else if (b.type === 'mlp') {
+        title = `Layer ${b.layer} FFN (MLP)`;
+      } else if (b.type === 'ln') {
+        title = `Layer ${b.layer} LayerNorm`;
+      } else if (b.type === 'add') {
+        title = `Layer ${b.layer} Residual Add`;
+      } else if (b.type === 'input') {
+        title = 'Token + Position Embeddings';
+      } else if (b.type === 'output') {
         title = 'Output Logits';
       }
 
-      // Find matching activation data
-      const infos = getNodeInfo(n);
+      const infos = getBlockInfo(b);
       let html = `<div class="tip-name">${title}</div>`;
       html += `<div class="tip-val">Intensity: ${(intensity * 100).toFixed(0)}%</div>`;
 
@@ -1115,13 +1088,13 @@ canvas.addEventListener('mousemove', (e) => {
   if (!found) tooltip.style.display = 'none';
 });
 
-function getNodeInfo(node) {
+function getBlockInfo(block) {
   const infos = [];
   for (const [name, data] of Object.entries(targetActivations)) {
-    if (data.layer_idx !== node.layer) continue;
-    if (node.type === 'attn' && name.includes('attn')) infos.push(data);
-    else if (node.type === 'mlp' && name.includes('mlp')) infos.push(data);
-    else if (node.type === 'ln' && name.includes('ln')) infos.push(data);
+    if (data.layer_idx !== block.layer) continue;
+    if ((block.type === 'attn' || block.type === 'head') && name.includes('attn')) infos.push(data);
+    else if (block.type === 'mlp' && name.includes('mlp')) infos.push(data);
+    else if (block.type === 'ln' && name.includes('ln')) infos.push(data);
   }
   return infos;
 }
