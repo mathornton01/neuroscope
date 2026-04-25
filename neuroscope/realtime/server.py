@@ -10,6 +10,7 @@ import asyncio
 import json
 import os
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
@@ -214,22 +215,28 @@ class ModelManager:
 # FastAPI app
 # ---------------------------------------------------------------------------
 
-app = FastAPI(title="NeuroScope Real-Time")
 manager: Optional[ModelManager] = None
 
 STATIC_DIR = Path(__file__).parent / "static"
 
 
-@app.on_event("startup")
-async def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     global manager
     model_name = os.environ.get("NEUROSCOPE_MODEL", "gpt2")
     manager = ModelManager(model_name)
+    yield
+
+
+app = FastAPI(title="NeuroScope Real-Time", lifespan=lifespan)
 
 
 @app.get("/")
 async def index():
-    return FileResponse(STATIC_DIR / "index.html")
+    index_file = STATIC_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    return HTMLResponse("<h1>NeuroScope Real-Time</h1><p>Connect via WebSocket at /ws</p>")
 
 
 @app.get("/api/model-info")
@@ -272,7 +279,8 @@ async def websocket_endpoint(ws: WebSocket):
             pass
 
 
-# Mount static files last
+# Ensure static directory exists and mount it
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
