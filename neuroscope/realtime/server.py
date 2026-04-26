@@ -251,6 +251,7 @@ class ModelManager:
         max_tokens: int = 100,
         temperature: float = 0.8,
         callback=None,
+        token_delay: float = 0.8,
     ):
         """Generate tokens one at a time with logit lens data."""
         input_ids = self.tokenizer.encode(prompt, return_tensors="pt")
@@ -310,7 +311,7 @@ class ModelManager:
             if token_id == self.tokenizer.eos_token_id:
                 break
 
-            await asyncio.sleep(0.005)
+            await asyncio.sleep(token_delay)
 
         if callback:
             full_text = self.tokenizer.decode(input_ids[0])
@@ -365,6 +366,8 @@ async def websocket_endpoint(ws: WebSocket):
                 prompt = data.get("prompt", "Hello")
                 max_tokens = min(data.get("max_tokens", 50), 200)
                 temperature = data.get("temperature", 0.8)
+                # Token delay in seconds (default 0.8s for observable pace)
+                token_delay = max(0.05, min(3.0, data.get("token_delay", 0.8)))
 
                 async def send_update(payload):
                     await ws.send_json(payload)
@@ -374,6 +377,7 @@ async def websocket_endpoint(ws: WebSocket):
                     max_tokens=max_tokens,
                     temperature=temperature,
                     callback=send_update,
+                    token_delay=token_delay,
                 )
 
             elif data.get("type") == "ping":

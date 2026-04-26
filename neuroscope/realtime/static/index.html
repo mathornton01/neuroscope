@@ -278,7 +278,7 @@
   .tk-bar {
     height: 100%;
     border-radius: 2px;
-    transition: width 0.3s ease;
+    transition: width 0.6s ease;
   }
   .tk-bar-label {
     position: absolute;
@@ -339,7 +339,7 @@
   .evo-bar-fill {
     height: 100%;
     border-radius: 3px;
-    transition: width 0.3s ease;
+    transition: width 0.6s ease;
   }
 
   .status-bar {
@@ -397,12 +397,13 @@
     </div>
 
     <div class="speed-section">
-      <label>Animation Speed</label>
+      <label>Token Speed</label>
       <div class="slider-row">
         <span class="slider-label">Slow</span>
-        <input type="range" id="speed-slider" min="1" max="10" value="5" step="1">
+        <input type="range" id="speed-slider" min="1" max="10" value="3" step="1">
         <span class="slider-label">Fast</span>
       </div>
+      <div style="text-align:center;font-size:9px;color:#555;margin-top:2px;" id="speed-label">~1.0s per token</div>
     </div>
 
     <div class="controls">
@@ -682,6 +683,7 @@ function startScan() {
     prompt: prompt,
     max_tokens: parseInt(document.getElementById('max-tokens').value) || 50,
     temperature: parseFloat(document.getElementById('temperature').value) || 0.8,
+    token_delay: getTokenDelay(),
   }));
 }
 
@@ -733,6 +735,20 @@ function lerp(a, b, t) { return a + (b - a) * Math.min(1, Math.max(0, t)); }
 function getSpeedFactor() {
   return parseInt(document.getElementById('speed-slider').value);
 }
+
+// Map slider (1-10) to server token delay in seconds
+// 1=2.0s (very slow), 3=1.0s (default), 5=0.5s, 8=0.15s, 10=0.05s
+function getTokenDelay() {
+  const v = getSpeedFactor();
+  const delays = [2.0, 1.5, 1.0, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1, 0.05];
+  return delays[v - 1] || 1.0;
+}
+
+// Update label when slider changes
+document.getElementById('speed-slider').addEventListener('input', () => {
+  const d = getTokenDelay();
+  document.getElementById('speed-label').textContent = d >= 1 ? `~${d.toFixed(1)}s per token` : `~${(d * 1000).toFixed(0)}ms per token`;
+});
 
 function render() {
   const now = performance.now();
@@ -974,11 +990,11 @@ function render() {
   // --- Flowing particles along the spine ---
   if (isGenerating) {
     // Spawn particles
-    if (Math.random() < 0.3 * speed) {
+    if (Math.random() < 0.15 * speed) {
       animationState.particles.push({
         y: inputY,
-        speed: 0.5 + Math.random() * 0.5,
-        alpha: 0.5 + Math.random() * 0.3,
+        speed: 0.3 + Math.random() * 0.3,
+        alpha: 0.4 + Math.random() * 0.3,
         size: 1 + Math.random() * 1.5,
       });
     }
@@ -986,7 +1002,7 @@ function render() {
     // Update and draw particles
     for (let i = animationState.particles.length - 1; i >= 0; i--) {
       const p = animationState.particles[i];
-      p.y += p.speed * speed * 0.3;
+      p.y += p.speed * speed * 0.15;
       p.alpha -= 0.002;
 
       if (p.y > outputY + 20 || p.alpha <= 0) {
