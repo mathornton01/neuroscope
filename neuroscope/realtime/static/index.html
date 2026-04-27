@@ -400,7 +400,7 @@
       <label>Token Speed</label>
       <div class="slider-row">
         <span class="slider-label">Slow</span>
-        <input type="range" id="speed-slider" min="1" max="10" value="3" step="1">
+        <input type="range" id="speed-slider" min="1" max="15" value="6" step="1">
         <span class="slider-label">Fast</span>
       </div>
       <div style="text-align:center;font-size:9px;color:#555;margin-top:2px;" id="speed-label">~1.0s per token</div>
@@ -736,11 +736,11 @@ function getSpeedFactor() {
   return parseInt(document.getElementById('speed-slider').value);
 }
 
-// Map slider (1-10) to server token delay in seconds
-// 1=2.0s (very slow), 3=1.0s (default), 5=0.5s, 8=0.15s, 10=0.05s
+// Map slider (1-15) to server token delay in seconds
+// 1=10s (ultra slow), 6=1.0s (default), 10=0.15s, 15=0.05s
 function getTokenDelay() {
   const v = getSpeedFactor();
-  const delays = [2.0, 1.5, 1.0, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1, 0.05];
+  const delays = [10.0, 8.0, 6.0, 4.0, 2.0, 1.0, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1, 0.08, 0.06, 0.05];
   return delays[v - 1] || 1.0;
 }
 

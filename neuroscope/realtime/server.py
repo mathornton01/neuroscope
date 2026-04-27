@@ -251,7 +251,7 @@ class ModelManager:
         max_tokens: int = 100,
         temperature: float = 0.8,
         callback=None,
-        token_delay: float = 0.8,
+        token_delay: float = 1.0,
     ):
         """Generate tokens one at a time with logit lens data."""
         input_ids = self.tokenizer.encode(prompt, return_tensors="pt")
@@ -367,7 +367,7 @@ async def websocket_endpoint(ws: WebSocket):
                 max_tokens = min(data.get("max_tokens", 50), 200)
                 temperature = data.get("temperature", 0.8)
                 # Token delay in seconds (default 0.8s for observable pace)
-                token_delay = max(0.05, min(3.0, data.get("token_delay", 0.8)))
+                token_delay = max(0.05, min(10.0, data.get("token_delay", 1.0)))
 
                 async def send_update(payload):
                     await ws.send_json(payload)
