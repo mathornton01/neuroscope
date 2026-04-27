@@ -28,7 +28,8 @@ from fastapi.responses import HTMLResponse, FileResponse
 
 class RealtimeHook:
     """Hook system that captures residual stream at each layer exit
-    and projects through the unembedding head to get per-layer predictions."""
+    and projects through the unembedding head to get per-layer predictions.
+    Also captures attention weights for token influence analysis."""
 
     def __init__(self, model: nn.Module, tokenizer):
         self.model = model
@@ -36,10 +37,11 @@ class RealtimeHook:
         self._handles = []
         self._layer_activations: dict[str, dict] = {}
         self._residual_streams: dict[int, torch.Tensor] = {}
+        self._attention_weights: dict[int, torch.Tensor] = {}
 
     def attach(self):
         """Hook every transformer block's output (residual stream)
-        plus attention and MLP sub-modules for activation stats."""
+        plus attention weights for token influence analysis."""
         self.detach()
         for name, module in self.model.named_modules():
             # Hook full transformer blocks to capture residual stream
@@ -49,6 +51,9 @@ class RealtimeHook:
                 for i, block in enumerate(self.model.transformer.h):
                     handle = block.register_forward_hook(self._make_residual_hook(i))
                     self._handles.append(handle)
+                    # Hook attention module to capture attention weights
+                    attn_handle = block.attn.register_forward_hook(self._make_attention_hook(i))
+                    self._handles.append(attn_handle)
                 break
             else:
                 # Generic: hook modules with attn/mlp
@@ -82,6 +87,17 @@ class RealtimeHook:
             }
         return hook_fn
 
+    def _make_attention_hook(self, layer_idx: int):
+        """Capture attention weights from each layer's attention module."""
+        def hook_fn(module, input, output):
+            # GPT-2 attention returns (attn_output, present, attn_weights)
+            # but only if output_attentions=True. We'll extract from the
+            # attention computation directly.
+            if isinstance(output, tuple) and len(output) >= 3 and output[2] is not None:
+                # attn_weights: [batch, n_heads, seq_len, seq_len]
+                self._attention_weights[layer_idx] = output[2].detach()
+        return hook_fn
+
     def _make_activation_hook(self, name: str):
         def hook_fn(module, input, output):
             if isinstance(output, tuple):
@@ -111,6 +127,7 @@ class RealtimeHook:
     def clear(self):
         self._layer_activations = {}
         self._residual_streams = {}
+        self._attention_weights = {}
 
     def get_activations(self) -> dict:
         return dict(self._layer_activations)
@@ -170,11 +187,51 @@ class RealtimeHook:
 
         return predictions
 
+    @torch.no_grad()
+    def get_token_influence(self, input_ids: torch.Tensor) -> dict:
+        """Compute per-token influence scores using attention weights.
+        Returns influence of each input token on the last position's prediction,
+        aggregated across all layers and heads."""
+        if not self._attention_weights:
+            return {"token_influence": [], "layer_attention": []}
+
+        n_tokens = input_ids.shape[1]
+        token_texts = [self.tokenizer.decode([input_ids[0, i].item()]) for i in range(n_tokens)]
+
+        # Aggregate attention to last token position across all layers/heads
+        # Shape per layer: [batch, n_heads, seq_len, seq_len]
+        # We want: for each layer, how much does the last token attend to each input token
+        layer_attention = []
+        cumulative_influence = np.zeros(n_tokens)
+
+        for layer_idx in sorted(self._attention_weights.keys()):
+            attn = self._attention_weights[layer_idx]
+            # attn shape: [1, n_heads, seq_len, seq_len]
+            # Get attention FROM last position TO all positions, averaged over heads
+            last_pos_attn = attn[0, :, -1, :n_tokens].mean(dim=0).cpu().numpy()
+            cumulative_influence += last_pos_attn
+
+            layer_attention.append({
+                "layer": layer_idx,
+                "weights": [round(float(w), 4) for w in last_pos_attn],
+            })
+
+        # Normalize cumulative influence
+        if cumulative_influence.sum() > 0:
+            cumulative_influence = cumulative_influence / cumulative_influence.sum()
+
+        return {
+            "tokens": token_texts,
+            "token_influence": [round(float(v), 4) for v in cumulative_influence],
+            "layer_attention": layer_attention,
+        }
+
     def detach(self):
         for h in self._handles:
             h.remove()
         self._handles = []
         self._residual_streams = {}
+        self._attention_weights = {}
 
 
 # ---------------------------------------------------------------------------
@@ -216,7 +273,7 @@ class ModelManager:
 
         # We need full forward pass (no KV cache) to get all layer residuals
         # for the logit lens to work correctly on the last token
-        outputs = self.model(input_ids, use_cache=True)
+        outputs = self.model(input_ids, use_cache=True, output_attentions=True)
 
         logits = outputs.logits[:, -1, :]
         new_past = outputs.past_key_values
@@ -242,8 +299,9 @@ class ModelManager:
 
         activations = self.hook.get_activations()
         layer_predictions = self.hook.get_layer_predictions(top_k=5)
+        token_influence = self.hook.get_token_influence(input_ids)
 
-        return next_token, activations, layer_predictions, final_predictions, None  # no cache reuse
+        return next_token, activations, layer_predictions, final_predictions, token_influence
 
     async def stream_generate(
         self,
@@ -259,9 +317,10 @@ class ModelManager:
         # Process prompt
         self.hook.clear()
         with torch.no_grad():
-            outputs = self.model(input_ids, use_cache=True)
+            outputs = self.model(input_ids, use_cache=True, output_attentions=True)
         prompt_activations = self.hook.get_activations()
         prompt_predictions = self.hook.get_layer_predictions(top_k=5)
+        prompt_token_influence = self.hook.get_token_influence(input_ids)
 
         # Get prompt's final predictions
         prompt_logits = outputs.logits[:, -1, :]
@@ -284,12 +343,13 @@ class ModelManager:
                 "activations": prompt_activations,
                 "layer_predictions": prompt_predictions,
                 "final_predictions": prompt_final_preds,
+                "token_influence": prompt_token_influence,
                 "model_info": self.model_info,
             })
 
         # Generate tokens one by one
         for step in range(max_tokens):
-            next_token, activations, layer_predictions, final_predictions, _ = self.generate_step(
+            next_token, activations, layer_predictions, final_predictions, token_influence = self.generate_step(
                 input_ids, temperature
             )
             input_ids = torch.cat([input_ids, next_token], dim=1)
@@ -306,6 +366,7 @@ class ModelManager:
                     "activations": activations,
                     "layer_predictions": layer_predictions,
                     "final_predictions": final_predictions,
+                    "token_influence": token_influence,
                 })
 
             if token_id == self.tokenizer.eos_token_id:

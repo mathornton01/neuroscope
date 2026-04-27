@@ -17,55 +17,91 @@
 
   .header {
     text-align: center;
-    padding: 10px;
+    padding: 6px;
     border-bottom: 1px solid #1a1a2e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
   }
   .header h1 {
-    font-size: 18px;
+    font-size: 16px;
     color: #00ffaa;
     letter-spacing: 3px;
   }
   .header .subtitle {
-    font-size: 10px;
+    font-size: 9px;
     color: #555;
-    margin-top: 2px;
+  }
+
+  /* Tab bar for switching bottom panels */
+  .tab-bar {
+    display: flex;
+    gap: 1px;
+    background: #111;
+    border-bottom: 1px solid #1a1a2e;
+    padding: 0 8px;
+  }
+  .tab-btn {
+    padding: 4px 10px;
+    font-size: 9px;
+    font-family: 'Courier New', monospace;
+    color: #555;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .tab-btn:hover { color: #999; }
+  .tab-btn.active {
+    color: #00ffaa;
+    border-bottom-color: #00ffaa;
   }
 
   .main-container {
     display: flex;
-    height: calc(100vh - 65px);
+    flex-direction: column;
+    height: calc(100vh - 32px);
+  }
+
+  .top-row {
+    display: flex;
+    flex: 1;
+    min-height: 0;
   }
 
   /* --- Left panel: controls + output --- */
   .left-panel {
-    width: 300px;
+    width: 260px;
     border-right: 1px solid #1a1a2e;
     display: flex;
     flex-direction: column;
-    padding: 10px;
+    padding: 8px;
     flex-shrink: 0;
   }
 
-  .prompt-section { margin-bottom: 8px; }
+  .prompt-section { margin-bottom: 6px; }
   .prompt-section label {
     display: block;
     font-size: 9px;
     color: #00ffaa;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
   .prompt-section textarea {
     width: 100%;
-    height: 50px;
+    height: 40px;
     background: #0e0e18;
     border: 1px solid #2a2a3e;
     color: #e0e0e0;
     font-family: 'Courier New', monospace;
-    font-size: 12px;
-    padding: 6px;
+    font-size: 11px;
+    padding: 5px;
     resize: none;
-    border-radius: 4px;
+    border-radius: 3px;
   }
   .prompt-section textarea:focus {
     outline: none;
@@ -74,20 +110,20 @@
 
   .controls {
     display: flex;
-    gap: 6px;
-    margin-bottom: 8px;
+    gap: 4px;
+    margin-bottom: 6px;
   }
   .controls button {
     flex: 1;
-    padding: 6px;
+    padding: 5px;
     background: #00ffaa;
     color: #0a0a0f;
     border: none;
     font-family: 'Courier New', monospace;
     font-weight: bold;
-    font-size: 11px;
+    font-size: 10px;
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 3px;
     letter-spacing: 1px;
   }
   .controls button:hover { background: #00cc88; }
@@ -104,42 +140,42 @@
 
   .param-row {
     display: flex;
-    gap: 8px;
-    margin-bottom: 8px;
+    gap: 6px;
+    margin-bottom: 6px;
   }
   .param-row label {
-    font-size: 9px;
+    font-size: 8px;
     color: #666;
     display: block;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
   }
   .param-row input {
-    width: 65px;
+    width: 60px;
     background: #0e0e18;
     border: 1px solid #2a2a3e;
     color: #e0e0e0;
-    padding: 3px 5px;
+    padding: 2px 4px;
     font-family: 'Courier New', monospace;
-    font-size: 11px;
+    font-size: 10px;
     border-radius: 3px;
   }
 
-  .speed-section { margin-bottom: 8px; }
+  .speed-section { margin-bottom: 6px; }
   .speed-section label {
     display: block;
-    font-size: 9px;
+    font-size: 8px;
     color: #666;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
   }
   .slider-row {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
   }
   .slider-label {
     font-size: 8px;
     color: #444;
-    min-width: 20px;
+    min-width: 18px;
   }
   .slider-row input[type="range"] {
     flex: 1;
@@ -168,18 +204,18 @@
   .output-section .label {
     font-size: 9px;
     color: #00ffaa;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
   .output-text {
     background: #0e0e18;
     border: 1px solid #2a2a3e;
-    padding: 8px;
-    font-size: 12px;
-    line-height: 1.5;
-    min-height: 60px;
-    border-radius: 4px;
+    padding: 6px;
+    font-size: 11px;
+    line-height: 1.4;
+    min-height: 40px;
+    border-radius: 3px;
     white-space: pre-wrap;
     word-wrap: break-word;
   }
@@ -188,7 +224,7 @@
   .output-text .cursor {
     display: inline-block;
     width: 7px;
-    height: 13px;
+    height: 12px;
     background: #00ffaa;
     animation: blink 0.5s infinite alternate;
     vertical-align: text-bottom;
@@ -196,8 +232,8 @@
   @keyframes blink { from { opacity: 1; } to { opacity: 0.2; } }
 
   .stats {
-    margin-top: 4px;
-    font-size: 9px;
+    margin-top: 3px;
+    font-size: 8px;
     color: #555;
   }
 
@@ -214,13 +250,13 @@
     height: 100%;
   }
 
-  /* --- Right panel: token evolution detail --- */
+  /* --- Right panel: token predictions detail --- */
   .right-panel {
-    width: 260px;
+    width: 220px;
     border-left: 1px solid #1a1a2e;
     display: flex;
     flex-direction: column;
-    padding: 10px;
+    padding: 8px;
     flex-shrink: 0;
     overflow-y: auto;
   }
@@ -230,46 +266,46 @@
     color: #00ffaa;
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .final-prediction {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
   .final-prediction .final-label {
-    font-size: 9px;
+    font-size: 8px;
     color: #666;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
   .final-prediction .final-token {
-    font-size: 22px;
+    font-size: 18px;
     color: #00ffaa;
     font-weight: bold;
-    min-height: 32px;
+    min-height: 24px;
   }
   .final-prediction .final-prob {
-    font-size: 10px;
+    font-size: 9px;
     color: #555;
   }
 
   .top-k-list {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
   .top-k-list .tk-title {
-    font-size: 9px;
+    font-size: 8px;
     color: #666;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
   .tk-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 3px;
-    font-size: 11px;
+    gap: 4px;
+    margin-bottom: 2px;
+    font-size: 10px;
   }
   .tk-bar-wrap {
     flex: 1;
-    height: 14px;
+    height: 12px;
     background: #111;
     border-radius: 2px;
     overflow: hidden;
@@ -282,17 +318,18 @@
   }
   .tk-bar-label {
     position: absolute;
-    left: 4px;
-    top: 1px;
-    font-size: 9px;
+    left: 3px;
+    top: 0px;
+    font-size: 8px;
     color: #ddd;
     text-shadow: 0 0 3px #000;
     white-space: nowrap;
+    line-height: 12px;
   }
   .tk-prob {
-    font-size: 9px;
+    font-size: 8px;
     color: #555;
-    min-width: 35px;
+    min-width: 30px;
     text-align: right;
   }
 
@@ -301,22 +338,22 @@
     overflow-y: auto;
   }
   .evolution-section .evo-title {
-    font-size: 9px;
+    font-size: 8px;
     color: #666;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
   .evo-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 2px 0;
-    font-size: 10px;
-    border-bottom: 1px solid #111;
+    gap: 4px;
+    padding: 1px 0;
+    font-size: 9px;
+    border-bottom: 1px solid #0e0e18;
   }
   .evo-layer {
     color: #444;
-    min-width: 22px;
-    font-size: 9px;
+    min-width: 18px;
+    font-size: 8px;
   }
   .evo-token {
     flex: 1;
@@ -325,13 +362,13 @@
     text-overflow: ellipsis;
   }
   .evo-conf {
-    min-width: 30px;
+    min-width: 26px;
     text-align: right;
-    font-size: 9px;
+    font-size: 8px;
   }
   .evo-bar {
-    width: 40px;
-    height: 6px;
+    width: 35px;
+    height: 5px;
     background: #111;
     border-radius: 3px;
     overflow: hidden;
@@ -342,27 +379,108 @@
     transition: width 0.6s ease;
   }
 
+  /* --- Bottom panel: charts --- */
+  .bottom-panel {
+    height: 180px;
+    border-top: 1px solid #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .chart-area {
+    flex: 1;
+    display: none;
+    padding: 6px 10px;
+    overflow: hidden;
+  }
+  .chart-area.active { display: flex; }
+
+  /* Token influence heatmap */
+  .influence-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .influence-title {
+    font-size: 9px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .influence-heatmap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    flex: 1;
+    align-content: flex-start;
+    overflow-y: auto;
+  }
+  .influence-token {
+    padding: 3px 5px;
+    font-size: 10px;
+    border-radius: 2px;
+    cursor: default;
+    position: relative;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+  }
+  .influence-token:hover {
+    border-color: #00ffaa;
+    transform: scale(1.1);
+  }
+
+  /* Entropy chart */
+  .entropy-chart-container {
+    width: 100%;
+    height: 100%;
+  }
+  #entropy-canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Activation chart */
+  .activation-chart-container {
+    width: 100%;
+    height: 100%;
+  }
+  #activation-canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Confidence timeline */
+  .confidence-chart-container {
+    width: 100%;
+    height: 100%;
+  }
+  #confidence-canvas {
+    width: 100%;
+    height: 100%;
+  }
+
   .status-bar {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 20px;
+    height: 18px;
     background: #08080e;
     border-top: 1px solid #1a1a2e;
     display: flex;
     align-items: center;
-    padding: 0 12px;
-    font-size: 9px;
+    padding: 0 10px;
+    font-size: 8px;
     color: #555;
-    gap: 15px;
+    gap: 12px;
   }
   .status-dot {
     display: inline-block;
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    margin-right: 4px;
+    margin-right: 3px;
   }
   .status-dot.connected { background: #00ffaa; }
   .status-dot.disconnected { background: #ff4444; }
@@ -373,76 +491,117 @@
 
 <div class="header">
   <h1>NEUROSCOPE</h1>
-  <div class="subtitle">Logit Lens -- Watch Predictions Evolve Through Each Layer</div>
+  <div class="subtitle">Real-Time Logit Lens + Token Influence Analysis</div>
 </div>
 
 <div class="main-container">
 
-  <!-- Left: controls + output -->
-  <div class="left-panel">
-    <div class="prompt-section">
-      <label>Prompt</label>
-      <textarea id="prompt-input" placeholder="Enter a prompt...">The meaning of life is</textarea>
+  <div class="top-row">
+
+    <!-- Left: controls + output -->
+    <div class="left-panel">
+      <div class="prompt-section">
+        <label>Prompt</label>
+        <textarea id="prompt-input" placeholder="Enter a prompt...">The meaning of life is</textarea>
+      </div>
+
+      <div class="param-row">
+        <div>
+          <label>Max Tokens</label>
+          <input type="number" id="max-tokens" value="50" min="1" max="200">
+        </div>
+        <div>
+          <label>Temperature</label>
+          <input type="number" id="temperature" value="0.8" min="0" max="2" step="0.1">
+        </div>
+      </div>
+
+      <div class="speed-section">
+        <label>Token Speed</label>
+        <div class="slider-row">
+          <span class="slider-label">Slow</span>
+          <input type="range" id="speed-slider" min="1" max="15" value="6" step="1">
+          <span class="slider-label">Fast</span>
+        </div>
+        <div style="text-align:center;font-size:8px;color:#555;margin-top:1px;" id="speed-label">~1.0s per token</div>
+      </div>
+
+      <div class="controls">
+        <button id="scan-btn" onclick="startScan()">SCAN</button>
+        <button id="stop-btn" class="stop" onclick="stopScan()" disabled>STOP</button>
+      </div>
+
+      <div class="output-section">
+        <div class="label">Output</div>
+        <div id="output-text" class="output-text">
+          <span class="prompt-part">Waiting for scan...</span>
+        </div>
+        <div id="stats" class="stats"></div>
+      </div>
     </div>
 
-    <div class="param-row">
-      <div>
-        <label>Max Tokens</label>
-        <input type="number" id="max-tokens" value="50" min="1" max="200">
+    <!-- Center: logit lens visualization -->
+    <div class="center-panel">
+      <canvas id="lens-canvas"></canvas>
+    </div>
+
+    <!-- Right: token predictions detail -->
+    <div class="right-panel">
+      <div class="panel-title">Current Prediction</div>
+
+      <div class="final-prediction">
+        <div class="final-label">Selected token:</div>
+        <div id="final-token" class="final-token">--</div>
+        <div id="final-prob" class="final-prob"></div>
       </div>
-      <div>
-        <label>Temperature</label>
-        <input type="number" id="temperature" value="0.8" min="0" max="2" step="0.1">
+
+      <div class="top-k-list">
+        <div class="tk-title">Top 5 candidates (output layer):</div>
+        <div id="top-k-container"></div>
+      </div>
+
+      <div class="evolution-section">
+        <div class="evo-title">Per-layer prediction:</div>
+        <div id="evolution-container"></div>
       </div>
     </div>
 
-    <div class="speed-section">
-      <label>Token Speed</label>
-      <div class="slider-row">
-        <span class="slider-label">Slow</span>
-        <input type="range" id="speed-slider" min="1" max="15" value="6" step="1">
-        <span class="slider-label">Fast</span>
-      </div>
-      <div style="text-align:center;font-size:9px;color:#555;margin-top:2px;" id="speed-label">~1.0s per token</div>
-    </div>
-
-    <div class="controls">
-      <button id="scan-btn" onclick="startScan()">SCAN</button>
-      <button id="stop-btn" class="stop" onclick="stopScan()" disabled>STOP</button>
-    </div>
-
-    <div class="output-section">
-      <div class="label">Output</div>
-      <div id="output-text" class="output-text">
-        <span class="prompt-part">Waiting for scan...</span>
-      </div>
-      <div id="stats" class="stats"></div>
-    </div>
   </div>
 
-  <!-- Center: logit lens visualization -->
-  <div class="center-panel">
-    <canvas id="lens-canvas"></canvas>
-  </div>
-
-  <!-- Right: token predictions detail -->
-  <div class="right-panel">
-    <div class="panel-title">Current Prediction</div>
-
-    <div class="final-prediction">
-      <div class="final-label">Selected token:</div>
-      <div id="final-token" class="final-token">--</div>
-      <div id="final-prob" class="final-prob"></div>
+  <!-- Bottom panel with tab switching -->
+  <div class="bottom-panel">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('influence')">Token Influence</button>
+      <button class="tab-btn" onclick="switchTab('entropy')">Entropy / Layer</button>
+      <button class="tab-btn" onclick="switchTab('activation')">Activation Magnitude</button>
+      <button class="tab-btn" onclick="switchTab('confidence')">Confidence Timeline</button>
     </div>
 
-    <div class="top-k-list">
-      <div class="tk-title">Top 5 candidates (final output):</div>
-      <div id="top-k-container"></div>
+    <div id="tab-influence" class="chart-area active">
+      <div class="influence-container">
+        <div class="influence-title" id="influence-title">Token influence on next prediction (hover for details)</div>
+        <div class="influence-heatmap" id="influence-heatmap">
+          <span style="color:#444;font-size:10px;">Run a scan to see token influence...</span>
+        </div>
+      </div>
     </div>
 
-    <div class="evolution-section">
-      <div class="evo-title">Prediction at each layer:</div>
-      <div id="evolution-container"></div>
+    <div id="tab-entropy" class="chart-area">
+      <div class="entropy-chart-container">
+        <canvas id="entropy-canvas"></canvas>
+      </div>
+    </div>
+
+    <div id="tab-activation" class="chart-area">
+      <div class="activation-chart-container">
+        <canvas id="activation-canvas"></canvas>
+      </div>
+    </div>
+
+    <div id="tab-confidence" class="chart-area">
+      <div class="confidence-chart-container">
+        <canvas id="confidence-canvas"></canvas>
+      </div>
     </div>
   </div>
 
@@ -465,21 +624,60 @@ let modelInfo = null;
 let tokenCount = 0;
 let startTime = 0;
 
-// Layer prediction data (the core visualization data)
-let currentLayerPredictions = [];  // [{layer, top_k, confidence, entropy}, ...]
-let currentFinalPredictions = [];  // top-5 from actual output
+// Layer prediction data
+let currentLayerPredictions = [];
+let currentFinalPredictions = [];
 let currentSelectedToken = '';
-let previousLayerPredictions = []; // for smooth transitions
+let previousLayerPredictions = [];
+
+// Token influence data
+let currentTokenInfluence = { tokens: [], token_influence: [], layer_attention: [] };
+
+// History for charts
+let entropyHistory = [];     // [{step, layers: [{layer, entropy, entropy_normalized}]}]
+let confidenceHistory = [];  // [{step, confidence, token}]
+let activationHistory = [];  // [{step, layers: [{layer, mean_magnitude, sparsity}]}]
 
 // For the center canvas animation
 let animationState = {
-  layerSlots: [],       // rendered state of each layer row
-  particles: [],        // flowing particles
-  tokenHistory: [],     // last N token steps for trail visualization
+  layerSlots: [],
+  particles: [],
+  tokenHistory: [],
 };
 
 const canvas = document.getElementById('lens-canvas');
 const ctx = canvas.getContext('2d');
+
+// =========================================================================
+// Tab switching
+// =========================================================================
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.chart-area').forEach(a => a.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tabName).classList.add('active');
+
+  // Resize canvases when switching to them
+  if (tabName === 'entropy') resizeChartCanvas('entropy-canvas');
+  if (tabName === 'activation') resizeChartCanvas('activation-canvas');
+  if (tabName === 'confidence') resizeChartCanvas('confidence-canvas');
+
+  // Redraw active chart
+  requestAnimationFrame(() => {
+    if (tabName === 'entropy') drawEntropyChart();
+    if (tabName === 'activation') drawActivationChart();
+    if (tabName === 'confidence') drawConfidenceChart();
+  });
+}
+
+function resizeChartCanvas(canvasId) {
+  const c = document.getElementById(canvasId);
+  const rect = c.parentElement.getBoundingClientRect();
+  c.width = rect.width * window.devicePixelRatio;
+  c.height = rect.height * window.devicePixelRatio;
+  c.style.width = rect.width + 'px';
+  c.style.height = rect.height + 'px';
+}
 
 // =========================================================================
 // WebSocket
@@ -512,7 +710,14 @@ function handleMessage(data) {
       document.getElementById('output-text').innerHTML =
         `<span class="prompt-part">${escapeHtml(data.prompt)}</span><span class="generated-part"></span><span class="cursor"></span>`;
 
+      // Reset history
+      entropyHistory = [];
+      confidenceHistory = [];
+      activationHistory = [];
+
       updatePredictions(data.layer_predictions, data.final_predictions, '');
+      updateTokenInfluence(data.token_influence);
+      recordMetrics(data.layer_predictions, data.activations, 0, '');
       initAnimation();
       break;
 
@@ -528,6 +733,17 @@ function handleMessage(data) {
 
       currentSelectedToken = data.token;
       updatePredictions(data.layer_predictions, data.final_predictions, data.token);
+      updateTokenInfluence(data.token_influence);
+      recordMetrics(data.layer_predictions, data.activations, data.step, data.token);
+
+      // Redraw active chart
+      const activeTab = document.querySelector('.tab-btn.active');
+      if (activeTab) {
+        const tabText = activeTab.textContent.toLowerCase();
+        if (tabText.includes('entropy')) drawEntropyChart();
+        else if (tabText.includes('activation')) drawActivationChart();
+        else if (tabText.includes('confidence')) drawConfidenceChart();
+      }
       break;
 
     case 'generation_complete':
@@ -551,6 +767,365 @@ function handleMessage(data) {
 }
 
 // =========================================================================
+// Record metrics for charts
+// =========================================================================
+function recordMetrics(layerPreds, activations, step, token) {
+  if (!layerPreds || layerPreds.length === 0) return;
+
+  // Entropy per layer
+  entropyHistory.push({
+    step: step,
+    layers: layerPreds.map(lp => ({
+      layer: lp.layer,
+      entropy: lp.entropy,
+      entropy_normalized: lp.entropy_normalized,
+    })),
+  });
+
+  // Confidence (top-1 probability from final layer)
+  const lastLayer = layerPreds[layerPreds.length - 1];
+  confidenceHistory.push({
+    step: step,
+    confidence: lastLayer.confidence,
+    token: token,
+  });
+
+  // Activation magnitude per layer
+  if (activations) {
+    const layerData = [];
+    for (const key of Object.keys(activations).sort()) {
+      const a = activations[key];
+      layerData.push({
+        layer: a.layer_idx,
+        mean_magnitude: a.mean_magnitude,
+        max_activation: a.max_activation,
+        sparsity: a.sparsity,
+      });
+    }
+    activationHistory.push({ step: step, layers: layerData });
+  }
+
+  // Keep max 100 steps
+  if (entropyHistory.length > 100) entropyHistory.shift();
+  if (confidenceHistory.length > 100) confidenceHistory.shift();
+  if (activationHistory.length > 100) activationHistory.shift();
+}
+
+// =========================================================================
+// Token Influence Heatmap
+// =========================================================================
+function updateTokenInfluence(influence) {
+  if (!influence || !influence.tokens || influence.tokens.length === 0) return;
+  currentTokenInfluence = influence;
+
+  const container = document.getElementById('influence-heatmap');
+  container.innerHTML = '';
+
+  const tokens = influence.tokens;
+  const weights = influence.token_influence;
+  const maxWeight = Math.max(...weights, 0.001);
+
+  for (let i = 0; i < tokens.length; i++) {
+    const el = document.createElement('span');
+    el.className = 'influence-token';
+
+    const normalized = weights[i] / maxWeight;
+    const r = Math.round(normalized * 255);
+    const g = Math.round(255 - normalized * 155);
+    const b = Math.round(170 - normalized * 170);
+    const alpha = 0.15 + normalized * 0.7;
+
+    el.style.background = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    el.style.color = normalized > 0.5 ? '#fff' : '#ccc';
+    el.textContent = tokens[i] || ' ';
+    el.title = `"${tokens[i]}" influence: ${(weights[i] * 100).toFixed(1)}%`;
+
+    // Per-layer breakdown on hover
+    if (influence.layer_attention && influence.layer_attention.length > 0) {
+      let breakdown = `Token: "${tokens[i]}"\nOverall influence: ${(weights[i] * 100).toFixed(1)}%\n\nPer-layer attention:`;
+      for (const la of influence.layer_attention) {
+        if (la.weights[i] !== undefined) {
+          breakdown += `\n  L${la.layer}: ${(la.weights[i] * 100).toFixed(1)}%`;
+        }
+      }
+      el.title = breakdown;
+    }
+
+    container.appendChild(el);
+  }
+
+  // Update title
+  document.getElementById('influence-title').textContent =
+    `Token influence on "${currentSelectedToken || 'next'}" prediction (${tokens.length} input tokens)`;
+}
+
+// =========================================================================
+// Entropy Chart (per-layer entropy over generation steps)
+// =========================================================================
+function drawEntropyChart() {
+  const c = document.getElementById('entropy-canvas');
+  const rect = c.parentElement.getBoundingClientRect();
+  c.width = rect.width * window.devicePixelRatio;
+  c.height = rect.height * window.devicePixelRatio;
+  c.style.width = rect.width + 'px';
+  c.style.height = rect.height + 'px';
+  const cx = c.getContext('2d');
+  cx.setTransform(1, 0, 0, 1, 0, 0);
+  cx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  const W = rect.width;
+  const H = rect.height;
+  cx.clearRect(0, 0, W, H);
+
+  if (entropyHistory.length === 0) {
+    cx.fillStyle = '#444';
+    cx.font = '10px Courier New';
+    cx.textAlign = 'center';
+    cx.fillText('Entropy per layer will appear during generation...', W / 2, H / 2);
+    return;
+  }
+
+  const marginL = 35, marginR = 10, marginT = 20, marginB = 20;
+  const plotW = W - marginL - marginR;
+  const plotH = H - marginT - marginB;
+
+  // Title
+  cx.fillStyle = '#666';
+  cx.font = '9px Courier New';
+  cx.textAlign = 'center';
+  cx.fillText('Normalized Entropy per Layer (lower = more certain)', W / 2, 12);
+
+  // Get the latest step's entropy data
+  const latest = entropyHistory[entropyHistory.length - 1];
+  if (!latest || !latest.layers) return;
+
+  const nLayers = latest.layers.length;
+
+  // Draw bar chart of entropy per layer for latest step
+  const barW = Math.max(4, (plotW / nLayers) - 2);
+
+  for (let i = 0; i < nLayers; i++) {
+    const lp = latest.layers[i];
+    const x = marginL + (i / nLayers) * plotW + 1;
+    const barH = lp.entropy_normalized * plotH;
+    const y = marginT + plotH - barH;
+
+    // Color: low entropy = green, high = red
+    const t = lp.entropy_normalized;
+    const r = Math.round(t * 255);
+    const g = Math.round((1 - t) * 255);
+    cx.fillStyle = `rgba(${r}, ${g}, 100, 0.7)`;
+    cx.fillRect(x, y, barW, barH);
+
+    // Layer label
+    if (nLayers <= 20 || i % 2 === 0) {
+      cx.fillStyle = '#555';
+      cx.font = '7px Courier New';
+      cx.textAlign = 'center';
+      cx.fillText('L' + lp.layer, x + barW / 2, marginT + plotH + 12);
+    }
+  }
+
+  // Y axis labels
+  cx.fillStyle = '#444';
+  cx.font = '7px Courier New';
+  cx.textAlign = 'right';
+  cx.fillText('1.0', marginL - 3, marginT + 4);
+  cx.fillText('0.5', marginL - 3, marginT + plotH / 2 + 2);
+  cx.fillText('0.0', marginL - 3, marginT + plotH + 2);
+
+  // Grid lines
+  cx.strokeStyle = '#1a1a2e';
+  cx.lineWidth = 0.5;
+  [0, 0.25, 0.5, 0.75, 1.0].forEach(v => {
+    const y = marginT + plotH * (1 - v);
+    cx.beginPath();
+    cx.moveTo(marginL, y);
+    cx.lineTo(W - marginR, y);
+    cx.stroke();
+  });
+
+  // Step counter
+  cx.fillStyle = '#444';
+  cx.font = '8px Courier New';
+  cx.textAlign = 'right';
+  cx.fillText(`Step ${latest.step}`, W - marginR, marginT - 4);
+}
+
+// =========================================================================
+// Activation Magnitude Chart
+// =========================================================================
+function drawActivationChart() {
+  const c = document.getElementById('activation-canvas');
+  const rect = c.parentElement.getBoundingClientRect();
+  c.width = rect.width * window.devicePixelRatio;
+  c.height = rect.height * window.devicePixelRatio;
+  c.style.width = rect.width + 'px';
+  c.style.height = rect.height + 'px';
+  const cx = c.getContext('2d');
+  cx.setTransform(1, 0, 0, 1, 0, 0);
+  cx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  const W = rect.width;
+  const H = rect.height;
+  cx.clearRect(0, 0, W, H);
+
+  if (activationHistory.length === 0) {
+    cx.fillStyle = '#444';
+    cx.font = '10px Courier New';
+    cx.textAlign = 'center';
+    cx.fillText('Activation magnitudes will appear during generation...', W / 2, H / 2);
+    return;
+  }
+
+  const marginL = 40, marginR = 10, marginT = 20, marginB = 20;
+  const plotW = W - marginL - marginR;
+  const plotH = H - marginT - marginB;
+
+  cx.fillStyle = '#666';
+  cx.font = '9px Courier New';
+  cx.textAlign = 'center';
+  cx.fillText('Mean Activation Magnitude per Layer (blue) + Sparsity (orange)', W / 2, 12);
+
+  const latest = activationHistory[activationHistory.length - 1];
+  if (!latest || !latest.layers) return;
+
+  const nLayers = latest.layers.length;
+  const maxMag = Math.max(...latest.layers.map(l => l.mean_magnitude), 1);
+  const barW = Math.max(3, (plotW / nLayers) / 2 - 1);
+
+  for (let i = 0; i < nLayers; i++) {
+    const lp = latest.layers[i];
+    const baseX = marginL + (i / nLayers) * plotW;
+
+    // Magnitude bar (cyan)
+    const magH = (lp.mean_magnitude / maxMag) * plotH;
+    cx.fillStyle = 'rgba(0, 200, 255, 0.6)';
+    cx.fillRect(baseX, marginT + plotH - magH, barW, magH);
+
+    // Sparsity bar (orange)
+    const sparH = lp.sparsity * plotH;
+    cx.fillStyle = 'rgba(255, 170, 0, 0.5)';
+    cx.fillRect(baseX + barW + 1, marginT + plotH - sparH, barW, sparH);
+
+    // Label
+    if (nLayers <= 20 || i % 2 === 0) {
+      cx.fillStyle = '#555';
+      cx.font = '7px Courier New';
+      cx.textAlign = 'center';
+      cx.fillText('L' + lp.layer, baseX + barW, marginT + plotH + 12);
+    }
+  }
+
+  // Grid
+  cx.strokeStyle = '#1a1a2e';
+  cx.lineWidth = 0.5;
+  for (let v = 0; v <= 1; v += 0.25) {
+    const y = marginT + plotH * (1 - v);
+    cx.beginPath();
+    cx.moveTo(marginL, y);
+    cx.lineTo(W - marginR, y);
+    cx.stroke();
+  }
+
+  // Y labels
+  cx.fillStyle = '#444';
+  cx.font = '7px Courier New';
+  cx.textAlign = 'right';
+  cx.fillText(maxMag.toFixed(1), marginL - 3, marginT + 4);
+  cx.fillText('0', marginL - 3, marginT + plotH + 2);
+}
+
+// =========================================================================
+// Confidence Timeline
+// =========================================================================
+function drawConfidenceChart() {
+  const c = document.getElementById('confidence-canvas');
+  const rect = c.parentElement.getBoundingClientRect();
+  c.width = rect.width * window.devicePixelRatio;
+  c.height = rect.height * window.devicePixelRatio;
+  c.style.width = rect.width + 'px';
+  c.style.height = rect.height + 'px';
+  const cx = c.getContext('2d');
+  cx.setTransform(1, 0, 0, 1, 0, 0);
+  cx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  const W = rect.width;
+  const H = rect.height;
+  cx.clearRect(0, 0, W, H);
+
+  if (confidenceHistory.length === 0) {
+    cx.fillStyle = '#444';
+    cx.font = '10px Courier New';
+    cx.textAlign = 'center';
+    cx.fillText('Confidence timeline will appear during generation...', W / 2, H / 2);
+    return;
+  }
+
+  const marginL = 35, marginR = 10, marginT = 20, marginB = 25;
+  const plotW = W - marginL - marginR;
+  const plotH = H - marginT - marginB;
+
+  cx.fillStyle = '#666';
+  cx.font = '9px Courier New';
+  cx.textAlign = 'center';
+  cx.fillText('Output confidence over time (top-1 probability)', W / 2, 12);
+
+  // Grid
+  cx.strokeStyle = '#1a1a2e';
+  cx.lineWidth = 0.5;
+  for (let v = 0; v <= 1; v += 0.25) {
+    const y = marginT + plotH * (1 - v);
+    cx.beginPath();
+    cx.moveTo(marginL, y);
+    cx.lineTo(W - marginR, y);
+    cx.stroke();
+
+    cx.fillStyle = '#444';
+    cx.font = '7px Courier New';
+    cx.textAlign = 'right';
+    cx.fillText((v * 100).toFixed(0) + '%', marginL - 3, y + 3);
+  }
+
+  const n = confidenceHistory.length;
+  if (n < 2) return;
+
+  // Draw line
+  cx.strokeStyle = '#00ffaa';
+  cx.lineWidth = 1.5;
+  cx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const x = marginL + (i / (n - 1)) * plotW;
+    const y = marginT + plotH * (1 - confidenceHistory[i].confidence);
+    if (i === 0) cx.moveTo(x, y);
+    else cx.lineTo(x, y);
+  }
+  cx.stroke();
+
+  // Draw dots + token labels
+  for (let i = 0; i < n; i++) {
+    const x = marginL + (i / (n - 1)) * plotW;
+    const y = marginT + plotH * (1 - confidenceHistory[i].confidence);
+
+    // Dot
+    cx.fillStyle = confidenceHistory[i].confidence > 0.5 ? '#00ffaa' : '#ff7744';
+    cx.beginPath();
+    cx.arc(x, y, 2.5, 0, Math.PI * 2);
+    cx.fill();
+
+    // Token label (show every few tokens to avoid overlap)
+    if (n <= 20 || i % Math.ceil(n / 20) === 0) {
+      const tok = confidenceHistory[i].token || '';
+      const label = tok.replace(/\n/g, '\\n').substring(0, 6);
+      cx.fillStyle = '#555';
+      cx.font = '7px Courier New';
+      cx.textAlign = 'center';
+      cx.fillText(label, x, marginT + plotH + 14);
+    }
+  }
+}
+
+// =========================================================================
 // Update predictions from server data
 // =========================================================================
 function updatePredictions(layerPreds, finalPreds, selectedToken) {
@@ -558,27 +1133,22 @@ function updatePredictions(layerPreds, finalPreds, selectedToken) {
   currentLayerPredictions = layerPreds || [];
   currentFinalPredictions = finalPreds || [];
 
-  // Save to history for trail effect
   if (currentLayerPredictions.length > 0) {
     animationState.tokenHistory.push({
       predictions: currentLayerPredictions,
       finalToken: selectedToken,
       timestamp: performance.now(),
     });
-    // Keep last 8 steps
     if (animationState.tokenHistory.length > 8) {
       animationState.tokenHistory.shift();
     }
   }
 
-  // Update right panel
   updateRightPanel(selectedToken);
 }
 
 function updateRightPanel(selectedToken) {
-  // Final selected token
   const ftEl = document.getElementById('final-token');
-  const fpEl = document.getElementById('final-prob');
   if (selectedToken) {
     ftEl.textContent = JSON.stringify(selectedToken);
   }
@@ -620,7 +1190,7 @@ function updateRightPanel(selectedToken) {
     tkContainer.appendChild(item);
   }
 
-  // Evolution list (prediction at each layer)
+  // Evolution list
   const evoContainer = document.getElementById('evolution-container');
   evoContainer.innerHTML = '';
 
@@ -635,7 +1205,6 @@ function updateRightPanel(selectedToken) {
     const tokenLabel = document.createElement('div');
     tokenLabel.className = 'evo-token';
     const topToken = lp.top_k[0];
-    // Color based on whether this layer's prediction matches the final output
     const matchesFinal = currentFinalPredictions.length > 0 &&
       topToken.token_id === currentFinalPredictions[0].token_id;
     tokenLabel.style.color = matchesFinal ? '#00ffaa' : '#ff7744';
@@ -736,15 +1305,12 @@ function getSpeedFactor() {
   return parseInt(document.getElementById('speed-slider').value);
 }
 
-// Map slider (1-15) to server token delay in seconds
-// 1=10s (ultra slow), 6=1.0s (default), 10=0.15s, 15=0.05s
 function getTokenDelay() {
   const v = getSpeedFactor();
   const delays = [10.0, 8.0, 6.0, 4.0, 2.0, 1.0, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1, 0.08, 0.06, 0.05];
   return delays[v - 1] || 1.0;
 }
 
-// Update label when slider changes
 document.getElementById('speed-slider').addEventListener('input', () => {
   const d = getTokenDelay();
   document.getElementById('speed-label').textContent = d >= 1 ? `~${d.toFixed(1)}s per token` : `~${(d * 1000).toFixed(0)}ms per token`;
@@ -760,45 +1326,43 @@ function render() {
 
   if (!modelInfo || currentLayerPredictions.length === 0) {
     ctx.fillStyle = '#444';
-    ctx.font = '13px Courier New';
+    ctx.font = '12px Courier New';
     ctx.textAlign = 'center';
     ctx.fillText('Press SCAN to begin', W / 2, H / 2);
     ctx.fillStyle = '#333';
-    ctx.font = '11px Courier New';
-    ctx.fillText('Watch predictions evolve through each layer', W / 2, H / 2 + 20);
+    ctx.font = '10px Courier New';
+    ctx.fillText('Watch predictions evolve through each layer', W / 2, H / 2 + 18);
     requestAnimationFrame(render);
     return;
   }
 
   const nLayers = modelInfo.n_layers;
-  const marginTop = 50;
-  const marginBottom = 50;
+  const marginTop = 35;
+  const marginBottom = 35;
   const availH = H - marginTop - marginBottom;
-  const rowH = availH / (nLayers + 2); // +2 for input/output rows
+  const rowH = availH / (nLayers + 2);
   const centerX = W / 2;
-
-  // --- Draw the logit lens tower ---
 
   // Title
   ctx.fillStyle = '#555';
-  ctx.font = '10px Courier New';
-  ctx.textAlign = 'center';
-  ctx.fillText('LOGIT LENS', centerX, 16);
-  ctx.fillStyle = '#333';
   ctx.font = '9px Courier New';
-  ctx.fillText('Most probable next token at each layer', centerX, 28);
+  ctx.textAlign = 'center';
+  ctx.fillText('LOGIT LENS', centerX, 12);
+  ctx.fillStyle = '#333';
+  ctx.font = '8px Courier New';
+  ctx.fillText('Most probable next token at each layer', centerX, 22);
 
   // Input row
   const inputY = marginTop;
   ctx.fillStyle = '#333';
-  ctx.font = '9px Courier New';
+  ctx.font = '8px Courier New';
   ctx.textAlign = 'right';
-  ctx.fillText('Input', centerX - 140, inputY + rowH * 0.4);
+  ctx.fillText('Input', centerX - 120, inputY + rowH * 0.4);
 
-  // Draw vertical spine
+  // Vertical spine
   const spineX = centerX;
   ctx.strokeStyle = '#1a1a2e';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(spineX, inputY);
   ctx.lineTo(spineX, inputY + (nLayers + 1) * rowH);
@@ -815,16 +1379,11 @@ function render() {
     const matchesFinal = currentFinalPredictions.length > 0 &&
       topToken.token_id === currentFinalPredictions[0].token_id;
 
-    // Entropy-based width for the "certainty bar"
-    const maxBarW = W * 0.35;
+    const maxBarW = W * 0.32;
     const barW = maxBarW * conf;
-    const barH = Math.max(12, rowH * 0.55);
+    const barH = Math.max(10, rowH * 0.5);
 
-    // Bar color: green if matches final, orange if not
-    const barColor = matchesFinal ? '#00ffaa' : '#ff7744';
     const barAlpha = 0.15 + conf * 0.55;
-
-    // Certainty bar (centered on spine)
     ctx.fillStyle = matchesFinal
       ? `rgba(0, 255, 170, ${barAlpha})`
       : `rgba(255, 119, 68, ${barAlpha})`;
@@ -832,7 +1391,6 @@ function render() {
     const barX = spineX - barW / 2;
     const barY = y - barH / 2;
 
-    // Rounded rectangle
     const r = 3;
     ctx.beginPath();
     ctx.moveTo(barX + r, barY);
@@ -846,86 +1404,84 @@ function render() {
     ctx.quadraticCurveTo(barX, barY, barX + r, barY);
     ctx.fill();
 
-    // Border
     ctx.strokeStyle = matchesFinal
       ? `rgba(0, 255, 170, ${0.3 + conf * 0.5})`
       : `rgba(255, 119, 68, ${0.2 + conf * 0.3})`;
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Layer label (left side)
+    // Layer label
     ctx.fillStyle = '#444';
-    ctx.font = '9px Courier New';
+    ctx.font = '8px Courier New';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`L${i}`, spineX - maxBarW / 2 - 8, y);
+    ctx.fillText(`L${i}`, spineX - maxBarW / 2 - 6, y);
 
-    // Token text (center of bar)
+    // Token text
     const tokenStr = topToken.token.replace(/\n/g, '\\n').replace(/\t/g, '\\t');
     ctx.fillStyle = matchesFinal
       ? `rgba(0, 255, 170, ${0.5 + conf * 0.5})`
       : `rgba(255, 180, 120, ${0.5 + conf * 0.5})`;
-    ctx.font = `${Math.min(14, barH * 0.8)}px Courier New`;
+    ctx.font = `${Math.min(12, barH * 0.8)}px Courier New`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(tokenStr, spineX, y);
 
-    // Confidence percentage (right side)
+    // Confidence
     ctx.fillStyle = '#555';
-    ctx.font = '9px Courier New';
+    ctx.font = '8px Courier New';
     ctx.textAlign = 'left';
-    ctx.fillText((conf * 100).toFixed(0) + '%', spineX + maxBarW / 2 + 8, y);
+    ctx.fillText((conf * 100).toFixed(0) + '%', spineX + maxBarW / 2 + 6, y);
 
-    // Runner-up tokens (smaller, to the right)
+    // Runner-up tokens
     if (lp.top_k.length > 1) {
       ctx.fillStyle = '#333';
-      ctx.font = '8px Courier New';
+      ctx.font = '7px Courier New';
       ctx.textAlign = 'left';
-      const altX = spineX + maxBarW / 2 + 40;
+      const altX = spineX + maxBarW / 2 + 30;
       for (let k = 1; k < Math.min(3, lp.top_k.length); k++) {
         const alt = lp.top_k[k];
         const altStr = alt.token.replace(/\n/g, '\\n');
         ctx.fillText(
           `${altStr} ${(alt.prob * 100).toFixed(0)}%`,
           altX,
-          y - 6 + (k - 1) * 10
+          y - 5 + (k - 1) * 9
         );
       }
     }
 
-    // Horizontal tick on the spine
+    // Tick on spine
     ctx.strokeStyle = '#2a2a3e';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(spineX - 4, y);
-    ctx.lineTo(spineX + 4, y);
+    ctx.moveTo(spineX - 3, y);
+    ctx.lineTo(spineX + 3, y);
     ctx.stroke();
   }
 
   // Output row
   const outputY = inputY + (nLayers + 0.5) * rowH;
   ctx.fillStyle = '#555';
-  ctx.font = '9px Courier New';
+  ctx.font = '8px Courier New';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
-  ctx.fillText('Output', spineX - W * 0.35 / 2 - 8, outputY);
+  ctx.fillText('Output', spineX - W * 0.32 / 2 - 6, outputY);
 
   if (currentFinalPredictions.length > 0) {
     const fp = currentFinalPredictions[0];
     const tokenStr = fp.token.replace(/\n/g, '\\n');
     ctx.fillStyle = '#00ffaa';
-    ctx.font = 'bold 16px Courier New';
+    ctx.font = 'bold 14px Courier New';
     ctx.textAlign = 'center';
     ctx.fillText(tokenStr, spineX, outputY);
 
     ctx.fillStyle = '#00ffaa80';
-    ctx.font = '10px Courier New';
+    ctx.font = '9px Courier New';
     ctx.textAlign = 'left';
-    ctx.fillText((fp.prob * 100).toFixed(1) + '%', spineX + 60, outputY);
+    ctx.fillText((fp.prob * 100).toFixed(1) + '%', spineX + 50, outputY);
   }
 
-  // --- Draw convergence indicator ---
-  // Show where in the stack the model "decided" on the final token
+  // Convergence indicator
   if (currentFinalPredictions.length > 0) {
     const finalId = currentFinalPredictions[0].token_id;
     let convergenceLayer = -1;
@@ -934,7 +1490,7 @@ function render() {
       if (lp.top_k[0].token_id === finalId) {
         if (convergenceLayer === -1) convergenceLayer = i;
       } else {
-        convergenceLayer = -1; // reset -- must be continuous to the end
+        convergenceLayer = -1;
       }
     }
 
@@ -942,8 +1498,7 @@ function render() {
       const convY = inputY + (convergenceLayer + 0.5) * rowH;
       const convEndY = outputY;
 
-      // Draw a subtle bracket on the left
-      const bracketX = spineX - W * 0.35 / 2 - 24;
+      const bracketX = spineX - W * 0.32 / 2 - 20;
       ctx.strokeStyle = 'rgba(0, 255, 170, 0.2)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -954,17 +1509,16 @@ function render() {
       ctx.stroke();
 
       ctx.fillStyle = '#00ffaa40';
-      ctx.font = '8px Courier New';
+      ctx.font = '7px Courier New';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('converged', bracketX, (convY + convEndY) / 2);
     }
   }
 
-  // --- Token trail (faded previous predictions) ---
+  // Token trail
   const history = animationState.tokenHistory;
   if (history.length > 1) {
-    // Draw faded trails from older token steps
     for (let h = 0; h < history.length - 1; h++) {
       const age = history.length - 1 - h;
       const alpha = Math.max(0.03, 0.12 - age * 0.015);
@@ -975,11 +1529,9 @@ function render() {
         const y = inputY + (i + 0.5) * rowH;
         const topToken = lp.top_k[0];
         const tokenStr = topToken.token.replace(/\n/g, '\\n');
-
-        // Offset old predictions slightly to the left
-        const offsetX = -20 - age * 12;
+        const offsetX = -18 - age * 10;
         ctx.fillStyle = `rgba(100, 100, 120, ${alpha})`;
-        ctx.font = '9px Courier New';
+        ctx.font = '8px Courier New';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(tokenStr, spineX + offsetX, y);
@@ -987,9 +1539,8 @@ function render() {
     }
   }
 
-  // --- Flowing particles along the spine ---
+  // Flowing particles
   if (isGenerating) {
-    // Spawn particles
     if (Math.random() < 0.15 * speed) {
       animationState.particles.push({
         y: inputY,
@@ -999,7 +1550,6 @@ function render() {
       });
     }
 
-    // Update and draw particles
     for (let i = animationState.particles.length - 1; i >= 0; i--) {
       const p = animationState.particles[i];
       p.y += p.speed * speed * 0.15;
