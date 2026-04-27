@@ -90,12 +90,15 @@ class RealtimeHook:
     def _make_attention_hook(self, layer_idx: int):
         """Capture attention weights from each layer's attention module."""
         def hook_fn(module, input, output):
-            # GPT-2 attention returns (attn_output, present, attn_weights)
-            # but only if output_attentions=True. We'll extract from the
-            # attention computation directly.
-            if isinstance(output, tuple) and len(output) >= 3 and output[2] is not None:
-                # attn_weights: [batch, n_heads, seq_len, seq_len]
-                self._attention_weights[layer_idx] = output[2].detach()
+            # GPT-2 attention with output_attentions=True returns:
+            #   (attn_output, present_key_value, attn_weights)
+            # attn_weights shape: [batch, n_heads, seq_len, seq_len]
+            if isinstance(output, tuple):
+                for item in output:
+                    if isinstance(item, torch.Tensor) and item.dim() == 4:
+                        # 4D tensor = [batch, heads, seq, seq] = attention weights
+                        self._attention_weights[layer_idx] = item.detach()
+                        return
         return hook_fn
 
     def _make_activation_hook(self, name: str):
@@ -193,7 +196,7 @@ class RealtimeHook:
         Returns influence of each input token on the last position's prediction,
         aggregated across all layers and heads."""
         if not self._attention_weights:
-            return {"token_influence": [], "layer_attention": []}
+            return {"tokens": [], "token_influence": [], "layer_attention": []}
 
         n_tokens = input_ids.shape[1]
         token_texts = [self.tokenizer.decode([input_ids[0, i].item()]) for i in range(n_tokens)]
@@ -245,7 +248,8 @@ class ModelManager:
         print(f"Loading model: {model_name}...")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForCausalLM.from_pretrained(
-            model_name, torch_dtype=torch.float32
+            model_name, torch_dtype=torch.float32,
+            attn_implementation="eager",  # Required to capture attention weights
         )
         self.model.eval()
         self.hook = RealtimeHook(self.model, self.tokenizer)
