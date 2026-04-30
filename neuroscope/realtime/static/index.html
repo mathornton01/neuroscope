@@ -516,14 +516,6 @@
         </div>
       </div>
 
-      <div class="model-section" style="margin-bottom:6px;">
-        <label style="display:block;font-size:8px;color:#666;margin-bottom:1px;">Backend / Model</label>
-        <select id="model-select" style="width:100%;background:#0e0e18;border:1px solid #2a2a3e;color:#e0e0e0;font-family:'Courier New',monospace;font-size:10px;padding:3px;border-radius:3px;">
-          <option value="huggingface:gpt2">HF: gpt2 (full viz)</option>
-        </select>
-        <div id="backend-badge" style="font-size:7px;color:#555;margin-top:1px;">Loading models...</div>
-      </div>
-
       <div class="speed-section">
         <label>Token Speed</label>
         <div class="slider-row">
@@ -1588,76 +1580,12 @@ function escapeHtml(text) {
 }
 
 // =========================================================================
-// Model switching
-// =========================================================================
-let activeBackend = 'huggingface';
-
-async function loadModelList() {
-  try {
-    const r = await fetch('/api/models');
-    const data = await r.json();
-    const select = document.getElementById('model-select');
-    select.innerHTML = '';
-
-    for (const m of data.models) {
-      const opt = document.createElement('option');
-      opt.value = `${m.backend}:${m.name}`;
-      const label = m.backend === 'huggingface' ? `HF: ${m.name} (full viz)` : `Ollama: ${m.name}`;
-      opt.textContent = label;
-      if (m.active) opt.selected = true;
-      select.appendChild(opt);
-    }
-
-    const badge = document.getElementById('backend-badge');
-    if (data.ollama_available) {
-      badge.innerHTML = '<span style="color:#00ffaa;">&#x2713;</span> Ollama connected | ' + data.models.length + ' models';
-    } else {
-      badge.innerHTML = '<span style="color:#ff4444;">&#x2717;</span> Ollama not available | HF only';
-    }
-
-    activeBackend = data.active_backend;
-  } catch (e) {
-    console.log('Could not load model list:', e);
-  }
-}
-
-document.getElementById('model-select').addEventListener('change', async () => {
-  const val = document.getElementById('model-select').value;
-  const [backend, ...nameParts] = val.split(':');
-  const model = nameParts.join(':');
-
-  try {
-    const r = await fetch('/api/switch-model', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ backend, model }),
-    });
-    const data = await r.json();
-    if (data.model_info) {
-      modelInfo = data.model_info;
-      activeBackend = backend;
-      document.getElementById('model-info').textContent =
-        `${modelInfo.name} | ${modelInfo.n_layers}L x ${modelInfo.n_heads}H | d=${modelInfo.d_model}`;
-      document.getElementById('backend-badge').innerHTML =
-        `Active: <span style="color:#00ffaa;">${backend}</span> / ${model}`;
-      initAnimation();
-    } else if (data.error) {
-      document.getElementById('backend-badge').innerHTML =
-        `<span style="color:#ff4444;">Error: ${data.error}</span>`;
-    }
-  } catch (e) {
-    console.error('Switch failed:', e);
-  }
-});
-
-// =========================================================================
 // Init
 // =========================================================================
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 connect();
 render();
-loadModelList();
 </script>
 </body>
 </html>
