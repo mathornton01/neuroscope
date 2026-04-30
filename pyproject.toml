@@ -29,6 +29,7 @@ dependencies = [
     "numpy>=1.24",
     "transformers>=4.35",
     "einops>=0.7",
+    "requests>=2.31",
 ]
 
 [project.optional-dependencies]
